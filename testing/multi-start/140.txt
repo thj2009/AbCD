@@ -1,0 +1,39 @@
+This is Ipopt version 3.12.3, running with linear solver mumps.
+NOTE: Other linear solvers might be more efficient (see Ipopt documentation).
+
+Number of nonzeros in equality constraint Jacobian...:        0
+Number of nonzeros in inequality constraint Jacobian.:       53
+Number of nonzeros in Lagrangian Hessian.............:        0
+
+Error evaluating objective gradient at user provided starting point.
+  No scaling factor for objective function computed!
+Error evaluating Jacobian of inequality constraints at user provided starting point.
+  No scaling factors for inequality constraints computed!
+
+Number of Iterations....: 0
+
+Number of objective function evaluations             = 0
+Number of objective gradient evaluations             = 0
+Number of equality constraint evaluations            = 0
+Number of inequality constraint evaluations          = 1
+Number of equality constraint Jacobian evaluations   = 0
+Number of inequality constraint Jacobian evaluations = 0
+Number of Lagrangian Hessian evaluations             = 0
+Total CPU secs in IPOPT (w/o function evaluations)   =      0.479
+Total CPU secs in NLP function evaluations           =      0.240
+
+EXIT: Invalid number in NLP function or derivative detected.
+                   proc           wall      num           mean             mean
+                   time           time     evals       proc time        wall time
+   eval_jac_g     0.000 [s]      0.000 [s]     1
+ all previous     0.000 [s]      0.000 [s]
+        ipopt     0.720 [s]      0.720 [s]
+    main loop     0.720 [s]      0.720 [s]
+====================
+Starting Point:
+[3.8163399433900986, -9.919575134043956e-09, -9.895531410067156e-09, 1.1266499870577407, -0.17520175479920563, -3.6578135678373136, 15.04180133110875, 9.870253607756398, 17.057183166777893, 18.925675733399316, -7.808438333611283, 14.223511918007066]
+[-1.0439232888740009, 15.456825028490856, -2.670737767068875, 7.740822253347563, -8.007171254431436, -14.8438547055268, -18.948602186326877]
+Parameter:
+[3.8163399433900986, -9.919575134043956e-09, -9.895531410067156e-09, 1.1266499870577407, -0.17520175479920563, -3.6578135678373136, 15.04180133110875, 9.870253607756398, 17.057183166777893, 18.925675733399316, -7.808438333611283, 14.223511918007066, 14.844049305761871, -1.0439232888740009, 15.456825028490856, -2.670737767068875, 7.740822253347563, -8.007171254431436, -14.8438547055268, -18.948602186326877]
+Objective:
+0.0

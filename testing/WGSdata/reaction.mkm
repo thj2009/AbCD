@@ -1,0 +1,15 @@
+
+[
+{"name": "R1",   "reactant": [["CO(g)", 1], ["*", 1]],    "product": [["CO*", 1]]},
+{"name": "R2",   "reactant": [["H2(g)", 1], ["*", 2]],    "product": [["H*", 2]]},
+{"name": "R3",   "reactant": [["H2O(g)", 1], ["*", 1]],   "product": [["H2O*", 1]]},
+{"name": "R4",   "reactant": [["CO2(g)", 1], ["*", 1]],   "product": [["CO2*", 1]]},
+{"name": "R5",   "reactant": [["H2O*", 1], ["*", 1]],     "product": [["H*", 1], ["OH*", 1]]},
+{"name": "R6",   "reactant": [["OH*", 1], ["*", 1]],      "product": [["H*", 1], ["O*", 1]]},
+{"name": "R7",   "reactant": [["CO*", 1], ["O*", 1]],     "product": [["CO2*", 1], ["*", 1]]},
+{"name": "R8",   "reactant": [["OH*", 2]],                "product": [["O*", 1], ["H2O*", 1]]},
+{"name": "R9",   "reactant": [["CO2*", 1], ["H*", 1]],    "product": [["HCOO*", 1], ["*", 1]]},
+{"name": "R10",  "reactant": [["CO*", 1], ["OH*", 1]],    "product": [["COOH*", 1], ["*", 1]]},
+{"name": "R11",  "reactant": [["COOH*", 1], ["*", 1]],    "product": [["CO2*", 1], ["H*", 1]]},
+{"name": "R12",  "reactant": [["COOH*", 1], ["OH*", 1]],  "product": [["CO2*", 1], ["H2O*", 1]]}
+]

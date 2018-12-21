@@ -1,0 +1,39 @@
+This is Ipopt version 3.12.3, running with linear solver mumps.
+NOTE: Other linear solvers might be more efficient (see Ipopt documentation).
+
+Number of nonzeros in equality constraint Jacobian...:        0
+Number of nonzeros in inequality constraint Jacobian.:       53
+Number of nonzeros in Lagrangian Hessian.............:        0
+
+Error evaluating objective gradient at user provided starting point.
+  No scaling factor for objective function computed!
+Error evaluating Jacobian of inequality constraints at user provided starting point.
+  No scaling factors for inequality constraints computed!
+
+Number of Iterations....: 0
+
+Number of objective function evaluations             = 0
+Number of objective gradient evaluations             = 0
+Number of equality constraint evaluations            = 0
+Number of inequality constraint evaluations          = 1
+Number of equality constraint Jacobian evaluations   = 0
+Number of inequality constraint Jacobian evaluations = 0
+Number of Lagrangian Hessian evaluations             = 0
+Total CPU secs in IPOPT (w/o function evaluations)   =      0.600
+Total CPU secs in NLP function evaluations           =      0.236
+
+EXIT: Invalid number in NLP function or derivative detected.
+                   proc           wall      num           mean             mean
+                   time           time     evals       proc time        wall time
+   eval_jac_g     0.000 [s]      0.000 [s]     1
+ all previous     0.000 [s]      0.000 [s]
+        ipopt     0.836 [s]      0.836 [s]
+    main loop     0.836 [s]      0.836 [s]
+====================
+Starting Point:
+[-9.872660500882963e-09, -9.86904325361309e-09, -9.933043950989173e-09, -9.803303492181053e-09, 16.21269472180594, -3.047659753611662, 0.38436632161963136, -6.484042138454389, 6.9008593027564595, -12.355872664830628, -7.599387309980638, 3.2164955753031426]
+[1.3811809544290636, 3.9974065862390264, -11.721124470782824, -6.668965366191171, -11.334908951394343, -10.404431949925637, -15.575180948818026]
+Parameter:
+[-9.872660500882963e-09, -9.86904325361309e-09, -9.933043950989173e-09, -9.803303492181053e-09, 16.21269472180594, -3.047659753611662, 0.38436632161963136, -6.484042138454389, 6.9008593027564595, -12.355872664830628, -7.599387309980638, 3.2164955753031426, 13.762154994044039, 1.3811809544290636, 3.9974065862390264, -11.721124470782824, -6.668965366191171, -11.334908951394343, -10.404431949925637, -15.575180948818026]
+Objective:
+0.0

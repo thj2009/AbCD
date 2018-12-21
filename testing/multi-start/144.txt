@@ -1,0 +1,39 @@
+This is Ipopt version 3.12.3, running with linear solver mumps.
+NOTE: Other linear solvers might be more efficient (see Ipopt documentation).
+
+Number of nonzeros in equality constraint Jacobian...:        0
+Number of nonzeros in inequality constraint Jacobian.:       53
+Number of nonzeros in Lagrangian Hessian.............:        0
+
+Error evaluating objective gradient at user provided starting point.
+  No scaling factor for objective function computed!
+Error evaluating Jacobian of inequality constraints at user provided starting point.
+  No scaling factors for inequality constraints computed!
+
+Number of Iterations....: 0
+
+Number of objective function evaluations             = 0
+Number of objective gradient evaluations             = 0
+Number of equality constraint evaluations            = 0
+Number of inequality constraint evaluations          = 1
+Number of equality constraint Jacobian evaluations   = 0
+Number of inequality constraint Jacobian evaluations = 0
+Number of Lagrangian Hessian evaluations             = 0
+Total CPU secs in IPOPT (w/o function evaluations)   =      0.637
+Total CPU secs in NLP function evaluations           =      0.235
+
+EXIT: Invalid number in NLP function or derivative detected.
+                   proc           wall      num           mean             mean
+                   time           time     evals       proc time        wall time
+   eval_jac_g     0.000 [s]      0.000 [s]     1
+ all previous     0.000 [s]      0.000 [s]
+        ipopt     0.874 [s]      0.874 [s]
+    main loop     0.874 [s]      0.874 [s]
+====================
+Starting Point:
+[-9.721265866395664e-09, 17.640376335578956, 9.006265771030499, 6.005464457126443, -9.11254054005123, 13.175910636987524, -17.680412975391615, 0.9034385975659398, -9.539483241603081, -0.6552155210765314, -7.862357032990027, 12.129979530481872]
+[1.4639205669231234, 8.530295250928605, 9.437882068508546, 18.22568946785436, -8.378604865801561, 2.700939241479172, 6.421037734181594]
+Parameter:
+[-9.721265866395664e-09, 17.640376335578956, 9.006265771030499, 6.005464457126443, -9.11254054005123, 13.175910636987524, -17.680412975391615, 0.9034385975659398, -9.539483241603081, -0.6552155210765314, -7.862357032990027, 12.129979530481872, 12.856931374376067, 1.4639205669231234, 8.530295250928605, 9.437882068508546, 18.22568946785436, -8.378604865801561, 2.700939241479172, 6.421037734181594]
+Objective:
+0.0

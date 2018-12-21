@@ -1,0 +1,7 @@
+# ignore cache file
+__pycache__/
+.spyproject/
+
+# ignore compile file
+*.pyc
+*.pyx

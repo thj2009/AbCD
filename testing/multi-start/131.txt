@@ -1,0 +1,74 @@
+This is Ipopt version 3.12.3, running with linear solver mumps.
+NOTE: Other linear solvers might be more efficient (see Ipopt documentation).
+
+Number of nonzeros in equality constraint Jacobian...:        0
+Number of nonzeros in inequality constraint Jacobian.:       53
+Number of nonzeros in Lagrangian Hessian.............:        0
+
+Total number of variables............................:       20
+                     variables with only lower bounds:        0
+                variables with lower and upper bounds:       20
+                     variables with only upper bounds:        0
+Total number of equality constraints.................:        0
+Total number of inequality constraints...............:       24
+        inequality constraints with only lower bounds:       24
+   inequality constraints with lower and upper bounds:        0
+        inequality constraints with only upper bounds:        0
+
+iter    objective    inf_pr   inf_du lg(mu)  ||d||  lg(rg) alpha_du alpha_pr  ls
+   0 2.9649361e-001 0.00e+000 9.65e-001   0.0 0.00e+000    -  0.00e+000 0.00e+000   0
+Warning: Cutting back alpha due to evaluation error
+Warning: Cutting back alpha due to evaluation error
+   1 2.9649355e-001 0.00e+000 5.11e-001  -4.4 1.39e-002    -  9.89e-001 2.50e-001h  3
+   2 2.9513089e-001 0.00e+000 1.54e-004  -2.0 1.01e+000    -  9.87e-001 1.00e+000f  1
+   3 2.8779296e-001 0.00e+000 2.52e-005  -2.8 1.11e+001    -  8.54e-001 1.00e+000f  1
+   4 2.8242916e-001 0.00e+000 1.63e-005  -3.5 1.18e+001    -  8.30e-001 1.00e+000f  1
+Warning: Cutting back alpha due to evaluation error
+   5 2.8109015e-001 0.00e+000 2.04e-005  -4.1 6.28e+000    -  1.00e+000 5.00e-001f  2
+   6 2.7962289e-001 0.00e+000 6.15e-008  -4.6 7.09e+000    -  9.97e-001 1.00e+000f  1
+Warning: Cutting back alpha due to evaluation error
+Warning: Cutting back alpha due to evaluation error
+Warning: Cutting back alpha due to evaluation error
+Warning: Cutting back alpha due to evaluation error
+Warning: Cutting back alpha due to evaluation error
+Warning: Cutting back alpha due to evaluation error
+   7 2.7961830e-001 0.00e+000 1.07e-005  -5.6 2.11e+000    -  9.99e-001 1.56e-002f  7
+
+Number of Iterations....: 7
+
+                                   (scaled)                 (unscaled)
+Objective...............:  2.7961829656374027e-001   2.7961829656374027e-001
+Dual infeasibility......:  1.0712187551408220e-005   1.0712187551408220e-005
+Constraint violation....:  0.0000000000000000e+000   0.0000000000000000e+000
+Complementarity.........:  7.5455310034576776e-005   7.5455310034576776e-005
+Overall NLP error.......:  7.5455310034576776e-005   7.5455310034576776e-005
+
+
+Number of objective function evaluations             = 8
+Number of objective gradient evaluations             = 8
+Number of equality constraint evaluations            = 0
+Number of inequality constraint evaluations          = 17
+Number of equality constraint Jacobian evaluations   = 0
+Number of inequality constraint Jacobian evaluations = 1
+Number of Lagrangian Hessian evaluations             = 0
+Total CPU secs in IPOPT (w/o function evaluations)   =      0.220
+Total CPU secs in NLP function evaluations           =      4.559
+
+EXIT: Optimal Solution Found.
+                   proc           wall      num           mean             mean
+                   time           time     evals       proc time        wall time
+       eval_f     0.274 [s]      0.275 [s]     8      34.25 [ms]       34.35 [ms]
+  eval_grad_f     1.585 [s]      1.586 [s]     9     176.11 [ms]      176.18 [ms]
+       eval_g     0.260 [s]      0.260 [s]     8      32.50 [ms]       32.51 [ms]
+   eval_jac_g     0.060 [s]      0.060 [s]     3      20.00 [ms]       19.99 [ms]
+ all previous     2.179 [s]      2.180 [s]
+        ipopt     2.610 [s]      2.609 [s]
+    main loop     4.789 [s]      4.789 [s]
+====================
+Starting Point:
+[1.614875034017364, 1.575693071169868, 2.7993406502530562, 2.9265621700498823, 0.053510133361946856, 0.023080506273783774, 0.08639938275815492, 1.2102058572688983, -0.0034540575050143823, 0.05949692208636218, 0.015753245268835418, 1.5503677377985685]
+[-1.2647847550263984, 2.595426165051163, -1.4393449119058639, -0.008881697725127624, -0.811468362202813, -0.006282941603316306, 0.035120348810559456]
+Parameter:
+[1.614875034017364, 1.575693071169868, 2.7993406502530562, 2.9265621700498823, 0.053510133361946856, 0.023080506273783774, 0.08639938275815492, 1.2102058572688983, -0.0034540575050143823, 0.05949692208636218, 0.015753245268835418, 1.5503677377985685, -0.1963012792717385, -1.2647847550263984, 2.595426165051163, -1.4393449119058639, -0.008881697725127624, -0.811468362202813, -0.006282941603316306, 0.035120348810559456]
+Objective:
+0.279618296564

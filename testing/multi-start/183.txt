@@ -1,0 +1,78 @@
+This is Ipopt version 3.12.3, running with linear solver mumps.
+NOTE: Other linear solvers might be more efficient (see Ipopt documentation).
+
+Number of nonzeros in equality constraint Jacobian...:        0
+Number of nonzeros in inequality constraint Jacobian.:       53
+Number of nonzeros in Lagrangian Hessian.............:        0
+
+Total number of variables............................:       20
+                     variables with only lower bounds:        0
+                variables with lower and upper bounds:       20
+                     variables with only upper bounds:        0
+Total number of equality constraints.................:        0
+Total number of inequality constraints...............:       24
+        inequality constraints with only lower bounds:       24
+   inequality constraints with lower and upper bounds:        0
+        inequality constraints with only upper bounds:        0
+
+iter    objective    inf_pr   inf_du lg(mu)  ||d||  lg(rg) alpha_du alpha_pr  ls
+   0 2.9483809e-001 0.00e+000 9.65e-001   0.0 0.00e+000    -  0.00e+000 0.00e+000   0
+   1 2.9483779e-001 0.00e+000 1.15e-002  -4.5 1.36e-002    -  9.90e-001 1.00e+000h  1
+Warning: Cutting back alpha due to evaluation error
+   2 2.9446017e-001 0.00e+000 1.59e-004  -2.3 7.56e-001    -  9.86e-001 5.00e-001f  2
+   3 2.8453532e-001 0.00e+000 1.82e-006  -2.8 1.25e+001    -  1.00e+000 1.00e+000f  1
+   4 2.8098534e-001 0.00e+000 5.99e-006  -3.7 1.06e+001    -  9.07e-001 1.00e+000f  1
+Warning: Cutting back alpha due to evaluation error
+Warning: Cutting back alpha due to evaluation error
+   5 2.8060892e-001 0.00e+000 2.30e-005  -4.4 5.16e+000    -  9.95e-001 2.50e-001f  3
+Warning: Cutting back alpha due to evaluation error
+Warning: Cutting back alpha due to evaluation error
+Warning: Cutting back alpha due to evaluation error
+Warning: Cutting back alpha due to evaluation error
+   6 2.8050913e-001 0.00e+000 2.99e-005  -5.0 5.52e+000    -  9.95e-001 6.25e-002f  5
+Warning: Cutting back alpha due to evaluation error
+Warning: Cutting back alpha due to evaluation error
+   7 2.8011782e-001 0.00e+000 2.58e-005  -5.7 5.82e+000    -  9.96e-001 2.50e-001f  3
+Warning: Cutting back alpha due to evaluation error
+Warning: Cutting back alpha due to evaluation error
+Warning: Cutting back alpha due to evaluation error
+   8 2.7997639e-001 0.00e+000 2.51e-005  -6.3 4.75e+000    -  1.00e+000 1.25e-001f  4
+
+Number of Iterations....: 8
+
+                                   (scaled)                 (unscaled)
+Objective...............:  2.7997638942992265e-001   2.7997638942992265e-001
+Dual infeasibility......:  2.5060800593682305e-005   2.5060800593682305e-005
+Constraint violation....:  0.0000000000000000e+000   0.0000000000000000e+000
+Complementarity.........:  8.7416923539656173e-005   8.7416923539656173e-005
+Overall NLP error.......:  8.7416923539656173e-005   8.7416923539656173e-005
+
+
+Number of objective function evaluations             = 9
+Number of objective gradient evaluations             = 9
+Number of equality constraint evaluations            = 0
+Number of inequality constraint evaluations          = 21
+Number of equality constraint Jacobian evaluations   = 0
+Number of inequality constraint Jacobian evaluations = 1
+Number of Lagrangian Hessian evaluations             = 0
+Total CPU secs in IPOPT (w/o function evaluations)   =      0.401
+Total CPU secs in NLP function evaluations           =      6.850
+
+EXIT: Optimal Solution Found.
+                   proc           wall      num           mean             mean
+                   time           time     evals       proc time        wall time
+       eval_f     0.504 [s]      0.503 [s]     9      56.00 [ms]       55.90 [ms]
+  eval_grad_f     2.342 [s]      2.343 [s]    10     234.20 [ms]      234.35 [ms]
+       eval_g     0.503 [s]      0.504 [s]     9      55.89 [ms]       56.01 [ms]
+   eval_jac_g     0.190 [s]      0.190 [s]     3      63.33 [ms]       63.34 [ms]
+ all previous     3.539 [s]      3.541 [s]
+        ipopt     3.712 [s]      3.711 [s]
+    main loop     7.251 [s]      7.252 [s]
+====================
+Starting Point:
+[3.964017219141672, 3.4193295065472413, 2.8820737884661574, 3.3910323433228133, 0.8010752455627144, -0.5440912183743949, 0.23871403786668377, 1.9781699079471882, -0.44181366185942506, -0.21250882578036448, -0.048681674539818774, 2.1500139160156655]
+[-1.7430179278467925, 2.01430143952279, -2.251890566368352, 0.8844204963365561, -1.2714491019935485, 0.02465465658971078, -0.05822829408563917]
+Parameter:
+[3.964017219141672, 3.4193295065472413, 2.8820737884661574, 3.3910323433228133, 0.8010752455627144, -0.5440912183743949, 0.23871403786668377, 1.9781699079471882, -0.44181366185942506, -0.21250882578036448, -0.048681674539818774, 2.1500139160156655, -0.8652203204738763, -1.7430179278467925, 2.01430143952279, -2.251890566368352, 0.8844204963365561, -1.2714491019935485, 0.02465465658971078, -0.05822829408563917]
+Objective:
+0.27997638943

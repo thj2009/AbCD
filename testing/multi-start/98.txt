@@ -1,0 +1,39 @@
+This is Ipopt version 3.12.3, running with linear solver mumps.
+NOTE: Other linear solvers might be more efficient (see Ipopt documentation).
+
+Number of nonzeros in equality constraint Jacobian...:        0
+Number of nonzeros in inequality constraint Jacobian.:       53
+Number of nonzeros in Lagrangian Hessian.............:        0
+
+Error evaluating objective gradient at user provided starting point.
+  No scaling factor for objective function computed!
+Error evaluating Jacobian of inequality constraints at user provided starting point.
+  No scaling factors for inequality constraints computed!
+
+Number of Iterations....: 0
+
+Number of objective function evaluations             = 0
+Number of objective gradient evaluations             = 0
+Number of equality constraint evaluations            = 0
+Number of inequality constraint evaluations          = 1
+Number of equality constraint Jacobian evaluations   = 0
+Number of inequality constraint Jacobian evaluations = 0
+Number of Lagrangian Hessian evaluations             = 0
+Total CPU secs in IPOPT (w/o function evaluations)   =      0.449
+Total CPU secs in NLP function evaluations           =      0.230
+
+EXIT: Invalid number in NLP function or derivative detected.
+                   proc           wall      num           mean             mean
+                   time           time     evals       proc time        wall time
+   eval_jac_g     0.000 [s]      0.000 [s]     1
+ all previous     0.000 [s]      0.000 [s]
+        ipopt     0.680 [s]      0.680 [s]
+    main loop     0.680 [s]      0.680 [s]
+====================
+Starting Point:
+[-9.760554991676423e-09, -9.924986782076154e-09, -9.39544237883104e-09, 7.346402045619482, -11.769166803736875, -4.15799652701959, -9.890696211700979, -2.0719929644698385, 0.7945122559548625, 7.652026524702518, 15.726275281331612, -9.918770490262985e-09]
+[10.817628366473844, 12.602403419863176, 2.1665836236672575, 5.544487872680715, 9.325674725662047, 9.588776882677141, 17.070165221247514]
+Parameter:
+[-9.760554991676423e-09, -9.924986782076154e-09, -9.39544237883104e-09, 7.346402045619482, -11.769166803736875, -4.15799652701959, -9.890696211700979, -2.0719929644698385, 0.7945122559548625, 7.652026524702518, 15.726275281331612, -9.918770490262985e-09, 10.966232797749829, 10.817628366473844, 12.602403419863176, 2.1665836236672575, 5.544487872680715, 9.325674725662047, 9.588776882677141, 17.070165221247514]
+Objective:
+0.0

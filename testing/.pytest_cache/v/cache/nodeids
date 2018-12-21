@@ -1,0 +1,7 @@
+[
+  "test_kinetic.py::test_reaction_species_count", 
+  "test_kinetic.py::test_reaction_parameter_count", 
+  "test_kinetic.py::test_stoimat", 
+  "test_kinetic.py::test_energy_expression", 
+  "test_kinetic.py::test_rate_expression"
+]

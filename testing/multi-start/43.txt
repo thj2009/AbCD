@@ -1,0 +1,39 @@
+This is Ipopt version 3.12.3, running with linear solver mumps.
+NOTE: Other linear solvers might be more efficient (see Ipopt documentation).
+
+Number of nonzeros in equality constraint Jacobian...:        0
+Number of nonzeros in inequality constraint Jacobian.:       53
+Number of nonzeros in Lagrangian Hessian.............:        0
+
+Error evaluating objective gradient at user provided starting point.
+  No scaling factor for objective function computed!
+Error evaluating Jacobian of inequality constraints at user provided starting point.
+  No scaling factors for inequality constraints computed!
+
+Number of Iterations....: 0
+
+Number of objective function evaluations             = 0
+Number of objective gradient evaluations             = 0
+Number of equality constraint evaluations            = 0
+Number of inequality constraint evaluations          = 1
+Number of equality constraint Jacobian evaluations   = 0
+Number of inequality constraint Jacobian evaluations = 0
+Number of Lagrangian Hessian evaluations             = 0
+Total CPU secs in IPOPT (w/o function evaluations)   =      0.658
+Total CPU secs in NLP function evaluations           =      0.264
+
+EXIT: Invalid number in NLP function or derivative detected.
+                   proc           wall      num           mean             mean
+                   time           time     evals       proc time        wall time
+   eval_jac_g     0.000 [s]      0.000 [s]     1
+ all previous     0.000 [s]      0.000 [s]
+        ipopt     0.922 [s]      0.922 [s]
+    main loop     0.922 [s]      0.922 [s]
+====================
+Starting Point:
+[0.19032408049538732, 18.84941193755646, -9.68166042725597e-09, -9.874522215575391e-09, -12.378062771994502, 3.0058761373017027, 4.52581763070109, -0.3502427446278056, -14.24091311400608, -13.056295642030076, 7.564860113390937, -8.308555528011116e-09]
+[-9.03158796753051, 10.306531523948896, 13.042233873244914, -5.372175090316766, -17.997458122744987, -8.464588487426994, 0.617041675749858]
+Parameter:
+[0.19032408049538732, 18.84941193755646, -9.68166042725597e-09, -9.874522215575391e-09, -12.378062771994502, 3.0058761373017027, 4.52581763070109, -0.3502427446278056, -14.24091311400608, -13.056295642030076, 7.564860113390937, -8.308555528011116e-09, 12.189872069556298, -9.03158796753051, 10.306531523948896, 13.042233873244914, -5.372175090316766, -17.997458122744987, -8.464588487426994, 0.617041675749858]
+Objective:
+0.0
