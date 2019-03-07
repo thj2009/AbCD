@@ -53,17 +53,23 @@ class CSTR(KineticModel):
         self.equil_rate_const_value = {}
         self.energy_value = {}
 
-    def initialize(self, scale=1.0, tau=1.0):
-        self.build_kinetic()
-        self.build_rate(scale=scale)
-        self.build_dae(tau=tau)
+        self._partP_in = cas.SX.sym('partP_in', self.ngas)
+        self._Flowtot = cas.SX.sym('Flowtot', 1)
+        self._flow = cas.SX.sym('flow', self.ngas)
+        # Derivative and Algebraic variable
+        self._d_flow = cas.SX.sym('d_flow', self.ngas)
+        self._d_cover = cas.SX.sym('d_cover', self.nsurf)
 
-    def build_dae(self, tau=1.0):
+    def initialize(self, tau=1.0, scale=1.0):
         '''
         Build the dae system of transient CSTR model
         :param tau: space time of CSTR model
         '''
         Ptot = cas.sumRows(self._partP_in)            # Total Pressure
+        for i in range(self.ngas):
+            self._partP[i] = self._flow[i]/self._Flowtot * Ptot
+        self.build_kinetic()
+        self.build_rate(scale=1)
         for j in range(self.ngas):
             self._d_flow[j] = self._partP_in[j] / Ptot * self._Flowtot \
                             - self._flow[j]
@@ -71,7 +77,6 @@ class CSTR(KineticModel):
                 self._d_flow[j] += self.stoimat[i][j] * self._rate[i]
             # Scale the flow rate
             self._d_flow[j] /= tau
-
         for j in range(self.nsurf):
             self._d_cover[j] = 0
             for i in range(self.nrxn):
@@ -261,7 +266,7 @@ class CSTR(KineticModel):
         nlpopts = {}
         nlpopts['max_iter'] = maxiter
         nlpopts['tol'] = nlptol
-        nlpopts['acceptable_tol'] = 1e-3
+        nlpopts['acceptable_tol'] = 1e-2
         nlpopts['jac_d_constant'] = 'yes'
         nlpopts['expect_infeasible_problem'] = 'yes'
         nlpopts['hessian_approximation'] = 'limited-memory'
@@ -386,10 +391,7 @@ def _sample(dE_start, transi_matrix, sample_method):
         deltaE = transi_matrix.dot(scale)
     newE = np.array(dE_start) + np.array(deltaE)
     return list(newE)
-            
-        
-        
-        
+
 def fwd_sensitivity_option(tf=5000, abstol=1e-10, reltol=1e-8):
     '''
     Options pass to CVODES for sensitivity analysis
@@ -403,7 +405,7 @@ def fwd_sensitivity_option(tf=5000, abstol=1e-10, reltol=1e-8):
     opts['fsens_all_at_once'] = True
     opts['fsens_err_con'] = True
     opts['fsens_abstol'] = 1e-6
-    opts['fsens_reltol'] = 1e-5
+    opts['fsens_reltol'] = 1e-4
     opts['abstol'] = abstol
     opts['reltol'] = reltol
     opts['abstolB'] = 1e-6

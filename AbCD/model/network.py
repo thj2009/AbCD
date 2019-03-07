@@ -85,15 +85,9 @@ class SimpleKinetic(ReactionNet):
         self._Pnlp = cas.MX.sym('Pnlp', self._Np)
         # Controlled Variable
         self._Tem = cas.SX.sym('Tem', 1)
-        self._partP_in = cas.SX.sym('partP_in', self.ngas)
-        self._Flowtot = cas.SX.sym('Flowtot', 1)
         # State variable
         self._cover = cas.SX.sym('cover', self.nsurf)
-        self._flow = cas.SX.sym('flow', self.ngas)
-        # Derivative and Algebraic variable
-        self._d_cover = cas.SX.sym('d_cover', self.nsurf)
-        self._d_flow = cas.SX.sym('d_flow', self.ngas)
-
+        self._partP = cas.SX.sym('partP', self.ngas)    # Partial Pressure of gas species
         # Kinetic Intermediate term, may used for functon evaluation
         self._thermo_constraint_expression = None
         self._reaction_energy_expression = None
@@ -106,7 +100,11 @@ class SimpleKinetic(ReactionNet):
         self._rfor = None
         self._rrev = None
 
-    def build_kinetic(self):
+    def build_kinetic(self, constTem=None):
+#        if constTem is not None:
+#            Tem = constTem
+#        else:
+#            Tem = self._Tem
         enthal_spe, enthal_spe_cons = [], []
         entro_spe = []
         denthal = []    # Store the enthalpy of each species for function calculation
@@ -180,11 +178,6 @@ class SimpleKinetic(ReactionNet):
         build net, forward, reverse rate expression for DAE system
         :param: scale: scale the rate constant for degree of rate control calculation
         '''
-        Ptot = cas.sumRows(self._partP_in)            # Total Pressure
-        partP = cas.SX.sym('partP', self.ngas)    # Partial Pressure of gas species
-        for i in range(self.ngas):
-            partP[i] = self._flow[i]/self._Flowtot * Ptot
-
         # Net, Forward, Reverse rate for each elementary step
         rate = cas.SX.sym('rate', self.nrxn)         # s-1
         rfor = cas.SX.sym('rfor', self.nrxn)         # s-1
@@ -199,15 +192,15 @@ class SimpleKinetic(ReactionNet):
             for j in range(self.nspe):
                 if self.stoimat[i][j] < 0:
                     if j < self.ngas:
-                        rfor[i] *= partP[j]**(-self.stoimat[i][j])
-                        Qeq[i] /= partP[j]**(-self.stoimat[i][j])
+                        rfor[i] *= self._partP[j]**(-self.stoimat[i][j])
+                        Qeq[i] /= self._partP[j]**(-self.stoimat[i][j])
                     else:
                         rfor[i] *= (self._cover[j - self.ngas])**(-self.stoimat[i][j])
                         Qeq[i] /= (self._cover[j - self.ngas])**(-self.stoimat[i][j])
                 elif self.stoimat[i][j] > 0:
                     if j < self.ngas:
-                        rrev[i] *= partP[j]**(self.stoimat[i][j])
-                        Qeq[i] *= partP[j]**(self.stoimat[i][j])
+                        rrev[i] *= self._partP[j]**(self.stoimat[i][j])
+                        Qeq[i] *= self._partP[j]**(self.stoimat[i][j])
                     else:
                         rrev[i] *= (self._cover[j - self.ngas])**(self.stoimat[i][j])
                         Qeq[i] *= (self._cover[j - self.ngas])**(self.stoimat[i][j])

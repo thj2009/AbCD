@@ -1,6 +1,7 @@
 import os
 import json
-from AbCD import ActiveSite, GasSpecies, SurfaceSpecies, Reaction, CSTRCondition
+from AbCD import ActiveSite, GasSpecies, SurfaceSpecies, Reaction
+from AbCD import CSTRCondition, VacTPDcondition
 from AbCD.utils import get_index_site, get_index_species, get_index_reaction
 
 class In_data(object):
@@ -145,6 +146,22 @@ class In_data(object):
                 condi.TurnOverFrequency = data['TurnOverFrequency']
             elif data['type'] == 'Batch':
                 pass
+            elif data['type'] == 'VacTPD':
+                condi = VacTPDcondition()
+                condi.name = data['name']
+                condi.T0 = data['T0']
+                condi.Tf = data['Tf']
+                condi.Beta = data['Beta']
+                condi.Ntime = data['Ntime']
+                condi.InitCoverage = data['InitCoverage']
+                if 'SimulationTime' not in data.keys():
+                    condi._calSim()
+                else:
+                    condi.SimulationTime = data['SimulationTime']
+                if 'TimeGrid' not in data.keys():
+                    condi._calTimeGrid()
+                else:
+                    condi.TimeGrid = data['TimeGrid']
             conditionlist.append(condi)
         return conditionlist
 

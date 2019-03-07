@@ -15,7 +15,7 @@ def site():
     site_info['mass'] = 64
     site_string = json.dumps([site_info])
     return site_string
-   
+
 @pytest.fixture
 def species():
     species_info = {}

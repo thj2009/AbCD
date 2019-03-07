@@ -1,0 +1,6 @@
+
+[
+{"name": "H2(g)",   "formula": "H2",    "phase": "g", "mass": 2.01588},
+{"name": "H*",      "formula": "H",     "phase": "s", "mass": 1.00794,  "site_name": "Cu", "denticity": 1},
+{"name": "*",       "formula": "",      "phase": "s", "mass": 0,        "site_name": "Cu", "denticity": 1}
+]

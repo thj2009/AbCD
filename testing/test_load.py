@@ -1,4 +1,4 @@
-import pytest
+#import pytest
 import numpy as np
 import casadi as cas
 from AbCD.io_data import In_data
@@ -32,18 +32,18 @@ def test_load():
     for rxn, rxnname in zip(reactionlist, reactionnamelist):
         assert str(rxn) == rxnname
 
-@pytest.fixture
-def cstr():
-    sitelist, specieslist, reactionlist = In_data.load_mkm('./WGSdata/')
-    conditionlist = In_data.load_condition('./WGSdata/')
-    dEa_index = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]
-    dBE_index = [4, 5 ,6, 7, 8, 9, 10, 11]
-    a = CSTR(specieslist=specieslist,
-        reactionlist=reactionlist,
-        dEa_index=dEa_index,
-        dBE_index=dBE_index)
-    a.initialize()
-    return a
+#@pytest.fixture
+#def cstr():
+#    sitelist, specieslist, reactionlist = In_data.load_mkm('./WGSdata/')
+#    conditionlist = In_data.load_condition('./WGSdata/')
+#    dEa_index = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]
+#    dBE_index = [4, 5 ,6, 7, 8, 9, 10, 11]
+#    a = CSTR(specieslist=specieslist,
+#        reactionlist=reactionlist,
+#        dEa_index=dEa_index,
+#        dBE_index=dBE_index)
+#    a.initialize()
+#    return a
 
 def test_thermoconsis(cstr):
     dE_start = np.zeros(20)
@@ -153,7 +153,7 @@ def test_new_pe():
     expr = []
     mkm = []
     for kk, condi in enumerate(conditionlist):
-        mkm.append(a.fwd_simulation(dE, condi)['CO(g)'])
+        mkm.append(a.fwd_simulation(dE, condi)[0]['CO(g)'])
         expr.append(condi.TurnOverFrequency['CO(g)'])
 #        mkm.append(-condi.SimulatedTOF['H2(g)'])
     
