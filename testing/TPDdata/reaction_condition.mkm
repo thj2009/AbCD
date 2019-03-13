@@ -1,12 +1,30 @@
 [
 
 {"type": "VacTPD",
-"name": "H2_1",
-"T0": 300,
-"Tf": 1600,
-"Beta": 0.5,
-"Ntime": 1000,
-"InitCoverage": {"H*": 1}
+"name": "H2_0.16",
+"T0": 100,
+"Tf": 800,
+"Beta": 3,
+"Ntime": 2000,
+"InitCoverage": {"H*": 0.16}
+},
+
+{"type": "VacTPD",
+"name": "H2_0.26",
+"T0": 100,
+"Tf": 800,
+"Beta": 3,
+"Ntime": 2000,
+"InitCoverage": {"H*": 0.26}
+},
+
+{"type": "VacTPD",
+"name": "H2_0.35",
+"T0": 100,
+"Tf": 800,
+"Beta": 3,
+"Ntime": 2000,
+"InitCoverage": {"H*": 0.35}
 }
 
 ]

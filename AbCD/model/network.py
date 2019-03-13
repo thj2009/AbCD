@@ -101,16 +101,16 @@ class SimpleKinetic(ReactionNet):
         self._rrev = None
 
     def build_kinetic(self, constTem=None):
-#        if constTem is not None:
-#            Tem = constTem
-#        else:
-#            Tem = self._Tem
+        if constTem is not None:
+            Tem = constTem
+        else:
+            Tem = self._Tem
         enthal_spe, enthal_spe_cons = [], []
         entro_spe = []
         denthal = []    # Store the enthalpy of each species for function calculation
         for j, spe in enumerate(self.specieslist):
-            HH = spe.Enthalpy(self._Tem)
-            SS = spe.Entropy(self._Tem)
+            HH = spe.Enthalpy(Tem)
+            SS = spe.Entropy(Tem)
             enthal_spe.append(HH)
             enthal_spe_cons.append(spe.Enthalpy(298.15))
             entro_spe.append(SS)
@@ -128,7 +128,7 @@ class SimpleKinetic(ReactionNet):
         enthal_react_cons, Ea_cons = [], []          # Store the Enthalpy of each reaction
         denthal_react = []
         for i, rxn in enumerate(self.reactionlist):
-            kine_data = rxn.Arrhenius(self._Tem)
+            kine_data = rxn.Arrhenius(Tem)
             Hreact, dHreact = 0, 0
             Sreact = 0
             Hreact_cons = 0
@@ -173,7 +173,7 @@ class SimpleKinetic(ReactionNet):
         self._Keq = Keq
         self._dH_expression = denthal_react
 
-    def build_rate(self, scale=1.0):
+    def build_rate(self, scale=1.0, des_scale=1):
         '''
         build net, forward, reverse rate expression for DAE system
         :param: scale: scale the rate constant for degree of rate control calculation
@@ -192,15 +192,17 @@ class SimpleKinetic(ReactionNet):
             for j in range(self.nspe):
                 if self.stoimat[i][j] < 0:
                     if j < self.ngas:
-                        rfor[i] *= self._partP[j]**(-self.stoimat[i][j])
-                        Qeq[i] /= self._partP[j]**(-self.stoimat[i][j])
+                        partP = self._partP[j] * des_scale
+                        rfor[i] *= partP**(-self.stoimat[i][j])
+                        Qeq[i] /= partP**(-self.stoimat[i][j])
                     else:
                         rfor[i] *= (self._cover[j - self.ngas])**(-self.stoimat[i][j])
                         Qeq[i] /= (self._cover[j - self.ngas])**(-self.stoimat[i][j])
                 elif self.stoimat[i][j] > 0:
                     if j < self.ngas:
-                        rrev[i] *= self._partP[j]**(self.stoimat[i][j])
-                        Qeq[i] *= self._partP[j]**(self.stoimat[i][j])
+                        partP = self._partP[j] * des_scale
+                        rrev[i] *= partP**(self.stoimat[i][j])
+                        Qeq[i] *= partP**(self.stoimat[i][j])
                     else:
                         rrev[i] *= (self._cover[j - self.ngas])**(self.stoimat[i][j])
                         Qeq[i] *= (self._cover[j - self.ngas])**(self.stoimat[i][j])

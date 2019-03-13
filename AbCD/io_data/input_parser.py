@@ -158,10 +158,14 @@ class In_data(object):
                     condi._calSim()
                 else:
                     condi.SimulationTime = data['SimulationTime']
-                if 'TimeGrid' not in data.keys():
-                    condi._calTimeGrid()
+                if 'TemGrid' not in data.keys():
+                    condi._calGrid()
                 else:
                     condi.TimeGrid = data['TimeGrid']
+                    condi.TemGrid = data['TemGrid']
+                if 'TemProfile' in data.keys():
+                    condi.TemProfile = data['TemProfile']
+                    condi.RateProfile = data['RateProfile']
             conditionlist.append(condi)
         return conditionlist
 

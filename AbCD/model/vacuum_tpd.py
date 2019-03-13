@@ -16,10 +16,14 @@ class TPDcondition(object):
         self.SimulationTime = None
         self.Ntime = 1000
         self.TimeGrid = None
+        self.TemGrid = None
+        self.TemProfile = None
+        self.RateProfile = None
     def _calSim(self):
         self.SimulationTime = (self.Tf - self.T0) / self.Beta
-    def _calTimeGrid(self):
+    def _calGrid(self):
         self.TimeGrid = np.linspace(0, self.SimulationTime, self.Ntime)
+        self.TemGrid = np.linspace(self.T0, self.Tf, self.Ntime)
 
 class VacTPDcondition(TPDcondition):
     def __init__(self, name=''):
@@ -45,18 +49,18 @@ class VacuumTPD(KineticModel):
         self._d_partP = cas.SX.sym('d_partP', self.ngas)
         self._d_cover = cas.SX.sym('d_cover', self.nsurf)
 
-    def initialize(self, scale=1.0, pump_level=1):
+    def initialize(self, scale=1.0, pump_level=1e5, A_V_ratio=1e-3, des_scale=1e-3, constTem=None):
         '''
         Build the dae system of transient CSTR model
         :param tau: space time of CSTR model
         '''
         self._Tem = self._T0 + self._beta * self._t
-        self.build_kinetic(constTem=500)
-        self.build_rate(scale=1)
+        self.build_kinetic(constTem=constTem)
+        self.build_rate(scale=1, des_scale=des_scale)
         for j in range(self.ngas):
             self._d_partP[j] = - pump_level * self._partP[j]
             for i in range(self.nrxn):
-                self._d_partP[j] += - 1 / pump_level * self.stoimat[i][j] * self._rate[i]
+                self._d_partP[j] += A_V_ratio * self.stoimat[i][j] * self._rate[i]
         for j in range(self.nsurf):
             self._d_cover[j] = 0
             for i in range(self.nrxn):
@@ -64,7 +68,6 @@ class VacuumTPD(KineticModel):
         self._x = cas.vertcat([self._partP, self._cover])
         self._p = cas.vertcat([self._dEa, self._dBE, self._T0, self._beta])
         self._xdot = cas.vertcat([self._d_partP, self._d_cover])
-#        self._dae_ = dict(x=self._x, p=self._p, ode=self._xdot, t=self._t)
         self._dae_ = cas.SXFunction("dae", cas.daeIn(x=self._x,p=self._p,t=self._t),
                                     cas.daeOut(ode=self._xdot))
 
@@ -86,23 +89,25 @@ class VacuumTPD(KineticModel):
 #        print(x0)
 #        print(P_dae)
 #        print(time)
-        opts['tf'] = 2
-        Fint = cas.Integrator('Fint', 'cvodes', self._dae_, opts)
-        F_sim = Fint(x0=x0, p=P_dae)
-
-
+#        opts['tf'] = 2
 #        Fint = cas.Integrator('Fint', 'cvodes', self._dae_, opts)
-#        Fsim = cas.Simulator('Fsim', Fint, time)
-#        Fsim.setInput(x0, 'x0')
-#        Fsim.setInput(P_dae, 'p')
-#        Fsim.evaluate()
+#        F_sim = Fint(x0=x0, p=P_dae)
+
+
+        Fint = cas.Integrator('Fint', 'cvodes', self._dae_, opts)
+        Fsim = cas.Simulator('Fsim', Fint, time)
+        Fsim.setInput(x0, 'x0')
+        Fsim.setInput(P_dae, 'p')
+        Fsim.evaluate()
         
-#        pressure = Fsim.getOutput().full()
+        # Evalu
+        out = Fsim.getOutput().full()
+        return out
 
     def init_condition(self, condition):
         x0 = [0] * (self.nspe - 1)
         for spe in condition.InitCoverage.keys():
             idx = get_index_species(spe, self.specieslist)
             x0[idx] = condition.InitCoverage[spe]
-        x0.append(1 - sum(x0))
+        x0.append(1 - sum(x0[self.ngas:]))
         return x0

@@ -1,3 +1,3 @@
 # Visualization Module
 
-from .parity import *
+from .visualtool import *
