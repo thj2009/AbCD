@@ -4,7 +4,7 @@ from matplotlib.ticker import FormatStrFormatter
 
 def parity_plot(xdata, ydata, xlabel='', ylabel='',
                 parity_line=True, rmse=True, scale='log10',
-                expand=0.1, figsize=(2.5, 2.5), dpi=300, figname=''):
+                expand=0.1, figsize=(2.5, 2.5), dpi=300, figname=None):
     '''
     Parity plot for model fitting
     '''
@@ -37,16 +37,17 @@ def parity_plot(xdata, ydata, xlabel='', ylabel='',
     ax.tick_params(axis='all', labelsize=7)
     ax.legend(frameon=False, fontsize=6)
     plt.tight_layout()
-    if not figname:
+    if figname is not None:
         fig.savefig(figname)
     return fig
 
 def tpd_profile(Tem, Rate, xlabel='', ylabel='',
-                figsize=(3.5, 2.5), dpi=300, figname='',
-                r_=None, fig=None, fmt='r-'):
+                figsize=(3.5, 2.5), dpi=300, figname=None,
+                r_=None, fig=None, fmt='r-', scale=1):
     if fig is None:
         fig = plt.figure(figsize=figsize, dpi=dpi)
     ax = fig.gca()
+    Rate = np.array(Rate) * scale
     ax.plot(Tem, Rate, fmt, linewidth=1)
     if r_ is None:
         r_ = [min(Tem), max(Tem)]
@@ -56,7 +57,7 @@ def tpd_profile(Tem, Rate, xlabel='', ylabel='',
     ax.set_ylabel(ylabel, fontsize=8)
     ax.tick_params(axis='all', labelsize=6)
     plt.tight_layout()
-    if not figname:
+    if figname is not None:
         fig.savefig(figname)
     return fig
 

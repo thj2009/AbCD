@@ -12,6 +12,7 @@ class Constant:
     hatree2kJmol = 2625.5       # Hatree to KJ.mol
     hatree2J = 4.35974e-18      # Hatree to J
     half_hc = 1/2. * h * c * 100 * NA/1000. # kJ cm /mol
+    u_2_kg = 1.66054e-27
 
 def is_number(s):
     try:

@@ -333,8 +333,8 @@ class CSTR(KineticModel):
                                jump/float(i+1)*100))
             Estar = _sample(Eprev, transi_matrix, sample_method)
             
-            if not self.CheckThermoConsis(Estar) and\
-                len(np.argwhere(np.array(Estar)-np.array(prior_info['lbound']) < 0)) != 0 and\
+            if not self.CheckThermoConsis(Estar) or\
+                len(np.argwhere(np.array(Estar)-np.array(prior_info['lbound']) < 0)) != 0 or\
                 len(np.argwhere(np.array(Estar)-np.array(prior_info['ubound']) > 0)) != 0:
                 # REJECT
                 pass
