@@ -130,7 +130,7 @@ class In_data(object):
             _dir_['specieslist'][idx].vibfreq = data['vib']
     
     @staticmethod
-    def read_reaction_condition(reaction_condition_file, conditionlist):
+    def read_reaction_condition(reaction_condition_file, conditionlist=[]):
         with open(reaction_condition_file, 'r') as f:
             datalist = json.load(f)
         for data in datalist:

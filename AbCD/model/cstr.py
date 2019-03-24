@@ -217,12 +217,15 @@ class CSTR(KineticModel):
                     else:
                         rsample = 1
                     if str(spe) in condition.TurnOverFrequency.keys():
-                        if err_type == 'abs':
-                            dev = tor - condition.TurnOverFrequency[str(spe)] * rsample
+                        exp_tor = condition.TurnOverFrequency[str(spe)]
+                        if err_type == 'abs' or abs(exp_tor) <= 1e-13:
+                            dev = tor -  exp_tor * rsample
                         elif err_type == 'rel':
-                            dev = 1 - tor/(condition.TurnOverFrequency[str(spe)] * rsample)
+                            #dev = 1 - tor/(exp_tor * rsample)
+                            dev = np.log(tor/exp_tor)
                         evidence += (dev * dev)/err**2
         self._evidence_ = evidence
+        #print(evidence)
         return evidence
 
     def prior_construct(self, prior_info):
@@ -253,16 +256,17 @@ class CSTR(KineticModel):
         return prior
 
     def mle_estimation(self, dE_start, conditionlist, evidence_info, prior_info,
-                       res_rsample=False,
+                       res_rsample=False, constraint=True,
                        nlptol=1e-2, maxiter=500, bfgs=True, print_level=5,
                        print_screen=False, report=''):
         Pnlp = self._Pnlp
         # Objective
         obj = self.evidence_construct(dE_start, conditionlist, evidence_info, res_rsample) +\
             self.prior_construct(prior_info)
-
-        nlp = dict(f=obj, x=Pnlp, g=self._thermo_constraint_expression)
-
+        if constraint:
+            nlp = dict(f=obj, x=Pnlp, g=self._thermo_constraint_expression)
+        else:
+            nlp = dict(f=obj, x=Pnlp)
         nlpopts = {}
         nlpopts['max_iter'] = maxiter
         nlpopts['tol'] = nlptol
@@ -282,7 +286,10 @@ class CSTR(KineticModel):
         ubG = np.inf * np.ones(2 * self.nrxn)
 
         x0 = np.hstack([dE_start])
-        solution = solver(x0=x0, lbx=lbP, ubx=ubP, lbg=lbG, ubg=ubG)
+        if constraint:
+            solution = solver(x0=x0, lbx=lbP, ubx=ubP, lbg=lbG, ubg=ubG)
+        else:
+            solution = solver(x0=x0, lbx=lbP, ubx=ubP)
         opt_sol = solution['x'].full().T[0].tolist()
         obj = solution['f'].full()[0][0]
 
@@ -398,7 +405,7 @@ def fwd_sensitivity_option(tf=5000, abstol=1e-10, reltol=1e-8):
     '''
     opts = {}
     opts['tf'] = tf
-#    opts["linear_solver"] = "csparse"
+    opts["linear_solver"] = "csparse"
     #opts["linear_solver_type"] = "user_defined"
     #opts['t0'] = 0
     #opts['print_stats'] = True
@@ -412,22 +419,22 @@ def fwd_sensitivity_option(tf=5000, abstol=1e-10, reltol=1e-8):
     opts['reltolB'] = 1e-4
     #opts['ad_weight'] = 0
 #    opts['ad_weight_sp'] = 1
-#    opts['linear_multistep_method'] = 'bdf'
+    opts['linear_multistep_method'] = 'bdf'
 #    opts['exact_jacobian'] = False
 #    opts['linear_solverB'] = 'lapacklu'
     #opts['linear_solver_typeB'] = 'dense'
 #    opts['iterative_solverB'] = 'gmres'
     #opts['interpolation_type'] ='polynomial'
-    #opts['max_multistep_order'] = 8
+    opts['max_multistep_order'] = 7
     opts['use_preconditioner'] = True
     opts['use_preconditionerB'] = True
     opts['pretype'] = 'both'
     opts['pretypeB'] = 'both'
-    opts['steps_per_checkpoint'] = 1e3
+    opts['steps_per_checkpoint'] = 1000
     #opts['nonlinear_solver_iteration'] = 'functional'
     #opts['linear_solver_typeB'] = 'iterative' 
     opts['disable_internal_warnings'] = True
     #opts['sensitivity_method'] = 'staggered'
-#    opts['max_num_steps'] = 1e5
+    opts['max_num_steps'] = 1000
     opts['stop_at_end'] = True
     return opts
