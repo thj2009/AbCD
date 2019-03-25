@@ -221,8 +221,9 @@ class CSTR(KineticModel):
                         if err_type == 'abs' or abs(exp_tor) <= 1e-13:
                             dev = tor -  exp_tor * rsample
                         elif err_type == 'rel':
-                            #dev = 1 - tor/(exp_tor * rsample)
-                            dev = np.log(tor/exp_tor)
+                            dev = 1 - tor/(exp_tor * rsample)
+                        elif err_type == 'log':
+                            dev = cas.log(tor/exp_tor)
                         evidence += (dev * dev)/err**2
         self._evidence_ = evidence
         #print(evidence)
@@ -270,7 +271,7 @@ class CSTR(KineticModel):
         nlpopts = {}
         nlpopts['max_iter'] = maxiter
         nlpopts['tol'] = nlptol
-        nlpopts['acceptable_tol'] = 1e-2
+        nlpopts['acceptable_tol'] = nlptol
         nlpopts['jac_d_constant'] = 'yes'
         nlpopts['expect_infeasible_problem'] = 'yes'
         nlpopts['hessian_approximation'] = 'limited-memory'
