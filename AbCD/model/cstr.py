@@ -259,7 +259,12 @@ class CSTR(KineticModel):
     def mle_estimation(self, dE_start, conditionlist, evidence_info, prior_info,
                        res_rsample=False, constraint=True,
                        nlptol=1e-2, maxiter=500, bfgs=True, print_level=5,
-                       print_screen=False, report=''):
+                       print_screen=False, report=None):
+        if report is not None:
+            import sys
+            sys_out = sys.stdout
+            fp = open(report, 'w')
+            sys.stdout = fp
         Pnlp = self._Pnlp
         # Objective
         obj = self.evidence_construct(dE_start, conditionlist, evidence_info, res_rsample) +\
@@ -301,7 +306,14 @@ class CSTR(KineticModel):
         print(opt_sol)
         print('Objective:')
         print(obj)
+        if report is not None:
+            import sys
+            fp.close()
+            sys.stdout = sys_out
+        
         return opt_sol, obj
+
+
 
     def bayesian_infer(self, ntot, nbuf, dE_start, transi_matrix, 
                        conditionlist, evidence_info, prior_info,
