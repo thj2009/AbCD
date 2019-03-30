@@ -185,13 +185,14 @@ class CSTR(KineticModel):
             result_list.append(result)
         return tor_list, result_list
             
-    def evidence_construct(self, dE_start, conditionlist, evidence_info, res_rsample=False):
+    def evidence_construct(self, dE_start, conditionlist, evidence_info, res_rsample=False,
+						   reltol=1e-8, fwdtol=1e-4, adjtol=1e-4):
 
         err_type = evidence_info['type']
         err = evidence_info['err']
 
         Pnlp = self._Pnlp
-        opts = fwd_sensitivity_option()
+        opts = fwd_sensitivity_option(reltol=reltol, adjtol=adjtol, fwdtol=fwdtol)
         Fint = cas.Integrator('Fint', 'cvodes', self._dae_, opts)
 
         x0 = [0] * (self.nspe - 1) + [1]
@@ -257,7 +258,8 @@ class CSTR(KineticModel):
         return prior
 
     def mle_estimation(self, dE_start, conditionlist, evidence_info, prior_info,
-                       res_rsample=False, constraint=True,
+                       res_rsample=False, constraint=True, 
+					   reltol=1e-8, adjtol=1e-4, fwdtol=1e-4,
                        nlptol=1e-2, maxiter=500, bfgs=True, print_level=5,
                        print_screen=False, report=None):
         if report is not None:
@@ -412,7 +414,8 @@ def _sample(dE_start, transi_matrix, sample_method):
     newE = np.array(dE_start) + np.array(deltaE)
     return list(newE)
 
-def fwd_sensitivity_option(tf=5000, abstol=1e-10, reltol=1e-8):
+def fwd_sensitivity_option(tf=5000, reltol=1e-8,
+						   fwdtol=1e-4, adjtol=1e-4, abs_rel=1e-2):
     '''
     Options pass to CVODES for sensitivity analysis
     '''
@@ -424,12 +427,12 @@ def fwd_sensitivity_option(tf=5000, abstol=1e-10, reltol=1e-8):
     #opts['print_stats'] = True
     opts['fsens_all_at_once'] = True
     opts['fsens_err_con'] = True
-    opts['fsens_abstol'] = 1e-6
-    opts['fsens_reltol'] = 1e-4
-    opts['abstol'] = abstol
+    opts['fsens_abstol'] = fwdtol * abs_rel
+    opts['fsens_reltol'] = fwdtol
+    opts['abstol'] = reltol * abs_rel
     opts['reltol'] = reltol
-    opts['abstolB'] = 1e-6
-    opts['reltolB'] = 1e-4
+    opts['abstolB'] = adjtol * abs_rel
+    opts['reltolB'] = adjtol
     #opts['ad_weight'] = 0
 #    opts['ad_weight_sp'] = 1
     opts['linear_multistep_method'] = 'bdf'
