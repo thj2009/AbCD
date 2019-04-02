@@ -424,8 +424,8 @@ def fwd_sensitivity_option(tf=5000, abstol=1e-10, reltol=1e-8):
     #opts['print_stats'] = True
     opts['fsens_all_at_once'] = True
     opts['fsens_err_con'] = True
-    opts['fsens_abstol'] = 1e-6
-    opts['fsens_reltol'] = 1e-4
+    opts['fsens_abstol'] = 1e-8
+    opts['fsens_reltol'] = 1e-6
     opts['abstol'] = abstol
     opts['reltol'] = reltol
     opts['abstolB'] = 1e-6
