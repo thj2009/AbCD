@@ -1,8 +1,7 @@
-import os
-import json
 from AbCD import ActiveSite, GasSpecies, SurfaceSpecies, Reaction
 from AbCD import CSTRCondition, VacTPDcondition, BATCHcondition
 from AbCD.utils import get_index_site, get_index_species, get_index_reaction
+
 
 class Out_data(object):
 
@@ -49,7 +48,8 @@ class Out_data(object):
         dBE_index = network.dBE_index
         Ea = dE_opt[:network._NEa]
         BE = dE_opt[network._NEa:]
-        
+#        print(Ea, BE)
+#        print(dEa_index, dBE_index)
         if dE_prime is not None:
             Ea_prime = dE_prime[:network._NEa]
             BE_prime = dE_prime[network._NEa:]
@@ -57,7 +57,7 @@ class Out_data(object):
         
         out = ''
         # Species Basic Info
-        out += 'Species ThermoInfo @ %.2f K \n' % Tem
+        out += 'Species ThermoInfo @ %.2f K (OPTIMIZED)\n' % Tem
         out += '{0:^6s} {1:^12s} {2:^12s} {3:^12s} {4:^12s} \n'\
                 .format('#', 'species', 'H(kJ/mol)', 'Opt(kJ/mol)', 'Mean(kJ/mol)')
         out += ('=='*20 + '\n')
@@ -67,8 +67,6 @@ class Out_data(object):
                 opt = '--'
                 mean = '--'
             else:
-#                print(BE)
-#                print(dBE_index)
                 opt = '%.2f' %BE[dBE_index.index(i)]
                 if dE_prime is not None:
                     mean = '%.2f' %BE_prime[dBE_index.index(i)]
@@ -76,5 +74,26 @@ class Out_data(object):
                     mean = '--'
             out += '{0:^6d} {1:^12s} {2:^12.1f} {3:^12s} {4:^12s} \n'\
                     .format(i+1, str(spe), H, opt, mean)
+
+        out += '\n\n'
+        # Reaction Basic Info
+        out += 'Reaction Basic ThermoInfo @ %.2f K (OPTIMIZED)\n' % Tem
+        out += '{0:^6s} {1:^6s} {2:^30s} {3:^12s} {4:^12s} {5:^12s}\n'\
+                .format('#', 'name', 'reaction', 'Ea (kJ/mol)', 'Opt(kJ/mol)',  'Mean(kJ/mol)')
+        out += ('=='*40 + '\n')
+        reactionlist = network.reactionlist
+        for j, rxn in enumerate(reactionlist):
+            Arr = rxn.Arrhenius(Tem)
+            Ea_r = Arr['Ea']
+            if j not in dEa_index:
+                opt = '--'
+                mean = '--'
+            else:
+                opt = '%.2f' %Ea[dEa_index.index(j)]
+                if dE_prime is not None:
+                    mean = '%.2f' %Ea_prime[dEa_index.index(j)]
+                else:
+                    mean = '--'
+            out += '{0:^6d} {1:^6s} {2:^30s} {3:^12.2f} {4:^12s} {5:^12s}\n'.format(j+1, rxn.name, str(rxn), Ea_r, opt, mean)
 
         print(out)

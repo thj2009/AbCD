@@ -19,7 +19,7 @@ class BATCHcondition(object):
         self.TurnOverFrequency = {}      # Dictionary to store outlet turnover frequency
         self.InitRate = {}
     def _calGrid(self):
-        self.TimeGrid = np.logspace(-5, self.SimulationTime, self.Ntime, base=10)
+        self.TimeGrid = np.linspace(0, self.SimulationTime, self.Ntime)
 
 class Batch(KineticModel):
     '''

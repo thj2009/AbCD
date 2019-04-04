@@ -185,12 +185,13 @@ class CSTR(KineticModel):
             result_list.append(result)
         return tor_list, result_list
             
-    def evidence_construct(self, dE_start, conditionlist, evidence_info, res_rsample=False,
-						   reltol=1e-8, fwdtol=1e-4, adjtol=1e-4):
+    def evidence_construct(self, dE_start, conditionlist, evidence_info, res_rsample=False):
 
         err_type = evidence_info['type']
         err = evidence_info['err']
-
+        reltol = evidence_info.get('reltol', 1e-8)
+        fwdtol = evidence_info.get('fwdtol', 1e-4)
+        adjtol = evidence_info.get('adjtol', 1e-4)
         Pnlp = self._Pnlp
         opts = fwd_sensitivity_option(reltol=reltol, adjtol=adjtol, fwdtol=fwdtol)
         Fint = cas.Integrator('Fint', 'cvodes', self._dae_, opts)
@@ -258,8 +259,7 @@ class CSTR(KineticModel):
         return prior
 
     def mle_estimation(self, dE_start, conditionlist, evidence_info, prior_info,
-                       res_rsample=False, constraint=True, 
-					   reltol=1e-8, adjtol=1e-4, fwdtol=1e-4,
+                       res_rsample=False, constraint=True,
                        nlptol=1e-2, maxiter=500, bfgs=True, print_level=5,
                        print_screen=False, report=None):
         if report is not None:
@@ -319,8 +319,8 @@ class CSTR(KineticModel):
 
     def bayesian_infer(self, ntot, nbuf, dE_start, transi_matrix, 
                        conditionlist, evidence_info, prior_info,
-                       sample_method='elementwise',
-                       step_write=100, save_result=True):
+                       sample_method='elementwise', constraint=True,
+                       step_write=100, save_result=True, report=None):
         
         out = ''
         Pnlp = self._Pnlp
@@ -336,10 +336,12 @@ class CSTR(KineticModel):
         prior_prev = np.exp(-float(prob_fxn.getOutput('o1')))
         posterior_prev = likeli_prev * prior_prev
         
+        out += '{0:^10s}  {1:^15s}  {2:^15s}  {3:^15s}  {4:^15s}'.\
+              format('step', 'prior', 'likelihood', 'posterior', 'accept%') + '\n'
+        out += '==' * 30 + '\n'
         print('{0:^10s}  {1:^15s}  {2:^15s}  {3:^15s}  {4:^15s}'.\
               format('step', 'prior', 'likelihood', 'posterior', 'accept%'))
         print('==' * 30)
-        
         tor_dis, result_dis = [], []
         if save_result:
             tor_prev, result_prev = self.condilist_fwd_simul(dE_start, conditionlist)
@@ -350,14 +352,20 @@ class CSTR(KineticModel):
         jump = 0
         for i in range(ntot):
             if i % step_write == 0:
+                out += '{0:^10d}  {1:^15.2e}  {2:^15.2e}  {3:^15.2e}  {4:^15.2f}'.\
+                        format(i, prior_prev, likeli_prev, posterior_prev,
+                               jump/float(i+1)*100) + '\n'
                 print('{0:^10d}  {1:^15.2e}  {2:^15.2e}  {3:^15.2e}  {4:^15.2f}'.\
                         format(i, prior_prev, likeli_prev, posterior_prev,
                                jump/float(i+1)*100))
             Estar = _sample(Eprev, transi_matrix, sample_method)
             
-            if not self.CheckThermoConsis(Estar) or\
-                len(np.argwhere(np.array(Estar)-np.array(prior_info['lbound']) < 0)) != 0 or\
-                len(np.argwhere(np.array(Estar)-np.array(prior_info['ubound']) > 0)) != 0:
+            # Define Constarint: True: Satisfy // False: not Satisfy
+            thermoConstraint = self.CheckThermoConsis(Estar) or (not constraint)
+            boundConstraint = len(np.argwhere(np.array(Estar)-np.array(prior_info['lbound']) < 0)) == 0 and\
+                len(np.argwhere(np.array(Estar)-np.array(prior_info['ubound']) > 0)) == 0
+            
+            if (not thermoConstraint) or (not boundConstraint):
                 # REJECT
                 pass
             else:
@@ -397,7 +405,10 @@ class CSTR(KineticModel):
                     tor_dis.append(tor_prev)
                     result_dis.append(result_prev)
         
-        print('==' * 30)
+        out += '==' * 30 + '\n'
+        if report is not None:
+            with open(report, 'w') as fp:
+                fp.write(out)
         return Edis, tor_dis, result_dis
         
         
