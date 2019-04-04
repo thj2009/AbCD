@@ -6,7 +6,7 @@ from AbCD.utils import get_index_site, get_index_species, get_index_reaction
 class Out_data(object):
 
     @staticmethod
-    def print_network(network, Tem=298.15):
+    def print_network(network, Tem=298.15, prints=True):
         out = ''
         
         specieslist = network.specieslist
@@ -39,8 +39,9 @@ class Out_data(object):
             n = Arr['n']
             A = Arr['A']
             out += '{0:^6d} {1:^6s} {2:^30s} {3:^16.3e} {4:^12.2f} {5:^6.2f}\n'.format(j+1, rxn.name, str(rxn), A, Ea, n)
-
-        print(out)
+        if prints:
+            print(out)
+        return out
 
     @staticmethod
     def print_optimization(network, dE_opt, dE_prime=None, Tem=298.15):

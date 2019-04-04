@@ -265,7 +265,7 @@ class CSTR(KineticModel):
         if report is not None:
             import sys
             sys_out = sys.stdout
-            fp = open(report, 'w')
+            fp = open(report, 'a')
             sys.stdout = fp
         Pnlp = self._Pnlp
         # Objective
@@ -323,6 +323,22 @@ class CSTR(KineticModel):
                        step_write=100, save_result=True, report=None):
         
         out = ''
+        # Summary of Evidence and Prior
+        out += '\n\n'
+        out += 'Evidence Info:  ' + str(evidence_info) + '\n'
+        out += '--' * 20 + '\n'
+        out += 'Prior Info:  \n'
+        out += str(prior_info) + '\n' 
+        out += 'Transition Matrix:  \n'
+        out += str(transi_matrix) + '\n' 
+        out += '==' * 20 + '\n'
+        out += 'Total Step = ' + str(ntot) + '\n'
+        out += 'Buffer Step = ' + str(nbuf) + '\n'
+        out += 'Save Result: ' + str(save_result) + '\n'
+        out += 'Starting Point = ' + str(dE_start) + '\n'
+        out += 'Thermo Constraint (True: check, False: not check) = ' + str(constraint) + '\n'
+        out += '==' * 20 + '\n'
+
         Pnlp = self._Pnlp
         # Objective
         likeli = self.evidence_construct(dE_start, conditionlist, evidence_info)
@@ -407,7 +423,7 @@ class CSTR(KineticModel):
         
         out += '==' * 30 + '\n'
         if report is not None:
-            with open(report, 'w') as fp:
+            with open(report, 'a') as fp:
                 fp.write(out)
         return Edis, tor_dis, result_dis
         
