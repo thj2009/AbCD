@@ -68,7 +68,7 @@ class VacuumTPD(KineticModel):
         self._x = cas.vertcat([self._partP, self._cover])
         self._p = cas.vertcat([self._dEa, self._dBE, self._T0, self._beta])
         self._xdot = cas.vertcat([self._d_partP, self._d_cover])
-        self._dae_ = cas.SXFunction("dae", cas.daeIn(x=self._x,p=self._p,t=self._t),
+        self._dae_ = cas.SXFunction("dae", cas.daeIn(x=self._x, p=self._p, t=self._t),
                                     cas.daeOut(ode=self._xdot))
 
     def fwd_simulation(self, dE_start, condition, detail=True,

@@ -53,6 +53,7 @@ class CSTR(KineticModel):
         self.equil_rate_const_value = {}
         self.energy_value = {}
 
+        self._t = cas.SX.sym('t', 1)                # Time
         self._partP_in = cas.SX.sym('partP_in', self.ngas)
         self._Flowtot = cas.SX.sym('Flowtot', 1)
         self._flow = cas.SX.sym('flow', self.ngas)
@@ -426,8 +427,7 @@ class CSTR(KineticModel):
             with open(report, 'a') as fp:
                 fp.write(out)
         return Edis, tor_dis, result_dis
-        
-        
+            
 def _sample(dE_start, transi_matrix, sample_method):
     if sample_method == 'elementwise':
         n = len(dE_start)

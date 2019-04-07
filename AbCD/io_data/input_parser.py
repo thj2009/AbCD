@@ -1,7 +1,7 @@
 import os
 import json
 from AbCD import ActiveSite, GasSpecies, SurfaceSpecies, Reaction
-from AbCD import CSTRCondition, VacTPDcondition, BATCHcondition
+from AbCD import CSTRCondition, VacTPDcondition, BATCHcondition, DynamicCSTRCondition
 from AbCD.utils import get_index_site, get_index_species, get_index_reaction
 
 class In_data(object):
@@ -144,6 +144,18 @@ class In_data(object):
                 condi.SimulationTime = data['SimulationTime']
                 condi.PartialPressure = data['PartialPressure']
                 condi.TurnOverFrequency = data['TurnOverFrequency']
+            elif data['type'] == 'DynamicCSTR':
+                condi = DynamicCSTRCondition()
+                condi.name = data['name']
+                condi.Temperature = data['Temperature']
+                condi.TotalFlow = data['TotalFlow']
+                condi.TotalSite = data['TotalSite']
+                condi.SimulationTime = data['SimulationTime']
+                condi.Ntime = data['Ntime']
+                condi.PartialPressure = data['PartialPressure']
+                # SS data
+                condi.NtimeSS = data['NtimeSS']
+                condi.timeSS = data['timeSS']
             elif data['type'] == 'Batch':
                 condi = BATCHcondition()
                 condi.name = data['name']
@@ -158,7 +170,6 @@ class In_data(object):
                     condi._calGrid()
                 else:
                     condi.TimeGrid = data['TimeGrid']
-
             elif data['type'] == 'VacTPD':
                 condi = VacTPDcondition()
                 condi.name = data['name']
