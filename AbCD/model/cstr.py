@@ -186,7 +186,8 @@ class CSTR(KineticModel):
             result_list.append(result)
         return tor_list, result_list
             
-    def evidence_construct(self, dE_start, conditionlist, evidence_info, res_rsample=False):
+    def evidence_construct(self, dE_start, conditionlist, evidence_info,
+                           res_rsample=False, sensitivity=True):
 
         err_type = evidence_info['type']
         err = evidence_info['err']
@@ -194,7 +195,10 @@ class CSTR(KineticModel):
         fwdtol = evidence_info.get('fwdtol', 1e-4)
         adjtol = evidence_info.get('adjtol', 1e-4)
         Pnlp = self._Pnlp
-        opts = fwd_sensitivity_option(reltol=reltol, adjtol=adjtol, fwdtol=fwdtol)
+        if sensitivity:
+            opts = fwd_sensitivity_option(reltol=reltol, adjtol=adjtol, fwdtol=fwdtol)
+        else:
+            opts = fwd_NoSensitivity_option(reltol=reltol)
         Fint = cas.Integrator('Fint', 'cvodes', self._dae_, opts)
 
         x0 = [0] * (self.nspe - 1) + [1]
@@ -342,7 +346,7 @@ class CSTR(KineticModel):
 
         Pnlp = self._Pnlp
         # Objective
-        likeli = self.evidence_construct(dE_start, conditionlist, evidence_info)
+        likeli = self.evidence_construct(dE_start, conditionlist, evidence_info, sensitivity=False)
         prior = self.prior_construct(prior_info)
         
         prob_fxn = cas.MXFunction('prob_fxn', [Pnlp], [likeli, prior])
@@ -441,14 +445,14 @@ def _sample(dE_start, transi_matrix, sample_method):
     newE = np.array(dE_start) + np.array(deltaE)
     return list(newE)
 
-def fwd_sensitivity_option(tf=5000, reltol=1e-8,
+def fwd_sensitivity_option(tf=500000, reltol=1e-8,
 						   fwdtol=1e-4, adjtol=1e-4, abs_rel=1e-2):
     '''
     Options pass to CVODES for sensitivity analysis
     '''
     opts = {}
     opts['tf'] = tf
-    opts["linear_solver"] = "csparse"
+    #opts["linear_solver"] = "csparse"
     #opts["linear_solver_type"] = "user_defined"
     #opts['t0'] = 0
     #opts['print_stats'] = True
@@ -468,7 +472,7 @@ def fwd_sensitivity_option(tf=5000, reltol=1e-8,
     #opts['linear_solver_typeB'] = 'dense'
 #    opts['iterative_solverB'] = 'gmres'
     #opts['interpolation_type'] ='polynomial'
-    opts['max_multistep_order'] = 7
+    opts['max_multistep_order'] = 5
     opts['use_preconditioner'] = True
     opts['use_preconditionerB'] = True
     opts['pretype'] = 'both'
@@ -480,4 +484,16 @@ def fwd_sensitivity_option(tf=5000, reltol=1e-8,
     #opts['sensitivity_method'] = 'staggered'
     opts['max_num_steps'] = 1000
     opts['stop_at_end'] = True
+    return opts
+
+def fwd_NoSensitivity_option(tf=100000, reltol=1e-8, abs_rel=1e-2):
+    '''
+    Options pass to CVODES integration
+    '''
+    opts = {}
+    opts['tf'] = tf       # Simulation time
+    opts['abstol'] = reltol * abs_rel
+    opts['reltol'] = reltol
+    opts['disable_internal_warnings'] = True
+    opts['max_num_steps'] = 1e5
     return opts
