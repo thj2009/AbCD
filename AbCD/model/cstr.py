@@ -187,8 +187,7 @@ class CSTR(KineticModel):
             result_list.append(result)
         return tor_list, result_list
             
-    def evidence_construct(self, dE_start, conditionlist, evidence_info,
-                           res_rsample=False, sensitivity=True):
+    def evidence_construct(self, dE_start, conditionlist, evidence_info, sensitivity=True):
 
         err_type = evidence_info['type']
         err = evidence_info['err']
@@ -220,21 +219,24 @@ class CSTR(KineticModel):
                 if spe.phase == 'gaseous':
                     # TOR
                     tor = Pinlet[idx]/TotalPressure * TotalFlow - F_sim['xf'][idx]
-                    if res_rsample:
-                        rsample = np.random.normal(1,0.1,1)
-                    else:
-                        rsample = 1
                     if str(spe) in condition.TurnOverFrequency.keys():
                         exp_tor = condition.TurnOverFrequency[str(spe)]
-                        if err_type == 'abs' or abs(exp_tor) <= 1e-13:
-                            dev = tor -  exp_tor * rsample
+                        if err_type == 'abs' or abs(exp_tor) <= 1e-5:
+                            dev = tor -  exp_tor
                         elif err_type == 'rel':
-                            dev = 1 - tor/(exp_tor * rsample)
+                            dev = 1 - tor/(exp_tor)
                         elif err_type == 'log':
                             dev = cas.log(tor/exp_tor)
-                        evidence += (dev * dev)/err**2
+                        else:
+                            pass
+                        if abs(exp_tor) <= 1e-5:
+                            # dev = cas.log(tor/exp_tor)
+                            # dev = 1 - tor/(exp_tor)
+                            evidence += (dev * dev) * 10000
+                        else:
+                            evidence += (dev * dev)/err**2
         self._evidence_ = evidence
-        #print(evidence)
+        # print(evidence)
         return evidence
 
     def prior_construct(self, prior_info):
@@ -275,7 +277,7 @@ class CSTR(KineticModel):
             sys.stdout = fp
         Pnlp = self._Pnlp
         # Objective
-        obj = self.evidence_construct(dE_start, conditionlist, evidence_info, res_rsample) +\
+        obj = self.evidence_construct(dE_start, conditionlist, evidence_info) +\
             self.prior_construct(prior_info)
         if constraint:
             nlp = dict(f=obj, x=Pnlp, g=self._thermo_constraint_expression)
@@ -451,17 +453,14 @@ def _sample(dE_start, transi_matrix, sample_method):
     newE = np.array(dE_start) + np.array(deltaE)
     return list(newE)
 
-def fwd_sensitivity_option(tf=500000, reltol=1e-8,
+def fwd_sensitivity_option(tf=5000, reltol=1e-8,
 						   fwdtol=1e-4, adjtol=1e-4, abs_rel=1e-2):
     '''
     Options pass to CVODES for sensitivity analysis
     '''
     opts = {}
     opts['tf'] = tf
-    #opts["linear_solver"] = "csparse"
-    #opts["linear_solver_type"] = "user_defined"
-    #opts['t0'] = 0
-    #opts['print_stats'] = True
+
     opts['fsens_all_at_once'] = True
     opts['fsens_err_con'] = True
     opts['fsens_abstol'] = fwdtol * abs_rel
@@ -470,24 +469,23 @@ def fwd_sensitivity_option(tf=500000, reltol=1e-8,
     opts['reltol'] = reltol
     opts['abstolB'] = adjtol * abs_rel
     opts['reltolB'] = adjtol
-    #opts['ad_weight'] = 0
-#    opts['ad_weight_sp'] = 1
+
+    # opts['fsens_abstol'] = 1e-6
+    # opts['fsens_reltol'] = 1e-5
+    # opts['abstol'] = 1e-10
+    # opts['reltol'] = 1e-8
+    # opts['abstolB'] = 1e-6
+    # opts['reltolB'] = 1e-4
+    
+    
     opts['linear_multistep_method'] = 'bdf'
-#    opts['exact_jacobian'] = False
-#    opts['linear_solverB'] = 'lapacklu'
-    #opts['linear_solver_typeB'] = 'dense'
-#    opts['iterative_solverB'] = 'gmres'
-    #opts['interpolation_type'] ='polynomial'
     opts['max_multistep_order'] = 5
     opts['use_preconditioner'] = True
     opts['use_preconditionerB'] = True
     opts['pretype'] = 'both'
     opts['pretypeB'] = 'both'
     opts['steps_per_checkpoint'] = 1000
-    #opts['nonlinear_solver_iteration'] = 'functional'
-    #opts['linear_solver_typeB'] = 'iterative' 
     opts['disable_internal_warnings'] = True
-    #opts['sensitivity_method'] = 'staggered'
     opts['max_num_steps'] = 1000
     opts['stop_at_end'] = True
     return opts
