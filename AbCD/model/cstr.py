@@ -194,6 +194,7 @@ class CSTR(KineticModel):
         reltol = evidence_info.get('reltol', 1e-8)
         fwdtol = evidence_info.get('fwdtol', 1e-4)
         adjtol = evidence_info.get('adjtol', 1e-4)
+        lowSurf = evidence_info.get('lowSurf', 1e4)
         Pnlp = self._Pnlp
         if sensitivity:
             opts = fwd_sensitivity_option(reltol=reltol, adjtol=adjtol, fwdtol=fwdtol)
@@ -232,7 +233,7 @@ class CSTR(KineticModel):
                         if abs(exp_tor) <= 1e-5:
                             # dev = cas.log(tor/exp_tor)
                             # dev = 1 - tor/(exp_tor)
-                            evidence += (dev * dev) * 10000
+                            evidence += (dev * dev) * lowSurf
                         else:
                             evidence += (dev * dev)/err**2
         self._evidence_ = evidence
@@ -275,6 +276,13 @@ class CSTR(KineticModel):
             sys_out = sys.stdout
             fp = open(report, 'a')
             sys.stdout = fp
+        print()
+        print('Evidence Info:')
+        print(str(evidence_info))
+        print('--' * 20)
+        print('Prior Info:')
+        print(str(prior_info))
+        print('--' * 20)
         Pnlp = self._Pnlp
         # Objective
         obj = self.evidence_construct(dE_start, conditionlist, evidence_info) +\
