@@ -4,6 +4,7 @@ import tempfile
 import numpy as np
 import casadi as cas
 from .network import KineticModel
+import time
 
 class CSTRCondition(object):
     '''
@@ -344,6 +345,8 @@ class CSTR(KineticModel):
         out += 'Thermo Constraint (True: check, False: not check) = ' + str(constraint) + '\n'
         out += '==' * 20 + '\n'
 
+        tic = time.clock()
+        
         Pnlp = self._Pnlp
         # Objective
         likeli = self.evidence_construct(dE_start, conditionlist, evidence_info, sensitivity=False)
@@ -427,6 +430,9 @@ class CSTR(KineticModel):
                     result_dis.append(result_prev)
         
         out += '==' * 30 + '\n'
+        toc = time.clock()
+        out += 'Total time = %.2f hr\n' %((toc - tic)/3600.)
+
         if report is not None:
             with open(report, 'a') as fp:
                 fp.write(out)
