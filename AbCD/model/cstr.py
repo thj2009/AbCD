@@ -276,7 +276,6 @@ class CSTR(KineticModel):
             sys_out = sys.stdout
             fp = open(report, 'a')
             sys.stdout = fp
-        print()
         print('Evidence Info:')
         print(str(evidence_info))
         print('--' * 20)
