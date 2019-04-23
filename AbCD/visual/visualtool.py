@@ -37,7 +37,7 @@ def parity_plot(xdata, ydata, xlabel='', ylabel='',
     ax.tick_params(axis='all', labelsize=7)
     ax.legend(frameon=False, fontsize=6)
     plt.tight_layout()
-    plt.show(block=False)
+    plt.show()
     if figname is not None:
         fig.savefig(figname)
     return fig
@@ -58,7 +58,7 @@ def tpd_profile(Tem, Rate, xlabel='', ylabel='',
     ax.set_ylabel(ylabel, fontsize=8)
     ax.tick_params(axis='all', labelsize=6)
     plt.tight_layout()
-    plt.show(block=False)
+    plt.show()
     if figname is not None:
         fig.savefig(figname)
     return fig
