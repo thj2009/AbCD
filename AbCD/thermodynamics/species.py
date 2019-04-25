@@ -115,3 +115,7 @@ class SurfaceSpecies(Species):
         else:
             S2D = 0
         return S2D
+
+    def collisionTheory(self):
+        A = 1. / np.sqrt(2 * np.pi * self.mass * _const.u_2_kg * _const.kb) * self.site.area() * 101325
+        return A
