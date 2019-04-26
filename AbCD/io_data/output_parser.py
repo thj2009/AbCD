@@ -23,7 +23,7 @@ class Out_data(object):
             else:
                 den = str(spe.denticity)
             out += '{0:^6d} {1:^10s} {2:^10s} {3:^6.1f} {4:^10s} {5:^12.2f} {6:^12.2f} \n'\
-                    .format(i+1, str(spe), spe.phase, spe.mass, den, H, S)
+                    .format(i, str(spe), spe.phase, spe.mass, den, H, S)
 
         out += '\n\n'
 
@@ -38,7 +38,7 @@ class Out_data(object):
             Ea = Arr['Ea']
             n = Arr['n']
             A = Arr['A']
-            out += '{0:^6d} {1:^6s} {2:^30s} {3:^16.3e} {4:^12.2f} {5:^6.2f}\n'.format(j+1, rxn.name, str(rxn), A, Ea, n)
+            out += '{0:^6d} {1:^6s} {2:^30s} {3:^16.3e} {4:^12.2f} {5:^6.2f}\n'.format(j, rxn.name, str(rxn), A, Ea, n)
         if prints:
             print(out)
         return out
@@ -76,7 +76,7 @@ class Out_data(object):
                 else:
                     mean = '--'
             out += '{0:^6d} {1:^12s} {2:^12.1f} {3:^12s} {4:^12s} \n'\
-                    .format(i+1, str(spe), H, opt, mean)
+                    .format(i, str(spe), H, opt, mean)
 
         out += '\n\n'
         # Reaction Basic Kinetic Information
@@ -97,7 +97,7 @@ class Out_data(object):
                     mean = '%.2f' %Ea_prime[dEa_index.index(j)]
                 else:
                     mean = '--'
-            out += '{0:^6d} {1:^6s} {2:^30s} {3:^12.2f} {4:^12s} {5:^12s}\n'.format(j+1, rxn.name, str(rxn), Ea_r, opt, mean)
+            out += '{0:^6d} {1:^6s} {2:^30s} {3:^12.2f} {4:^12s} {5:^12s}\n'.format(j, rxn.name, str(rxn), Ea_r, opt, mean)
 
             
             
@@ -116,7 +116,7 @@ class Out_data(object):
             ddH = rxn.deltaH()
             
             dG_ = dG0 + ddH
-            out += '{0:^6d} {1:^6s} {2:^30s} {3:^12.2f} {4:^12.2f} {5:^12.2f}\n'.format(j+1, rxn.name, str(rxn), dH, ddH, dS)
+            out += '{0:^6d} {1:^6s} {2:^30s} {3:^12.2f} {4:^12.2f} {5:^12.2f}\n'.format(j, rxn.name, str(rxn), dH, ddH, dS)
 
         print(out)
 
@@ -167,10 +167,94 @@ class Out_data(object):
             
             
     @staticmethod
-    def toCataViz(network, dE, main_bars_index=[], main_connectors_index=[],
-                  side_bars_index=[], setting={}):
+    def toVizPES(network, dE, barListIn=[], connListIn=[], 
+                 mainBarIndex=[], sideBarIndex=[],
+                 mainConnIndex=[], sideConnIndex=[],
+                 setting={},
+                 Tem=298.15, e_type='H', shift=True):
         '''
         Write network information to CataViz for Potential Energy Surface 
         '''
-        pass
+
+        assign_correction(network, dE)
         
+
+        # CREATE BARLIST
+        barList = []
+        E0 = 0
+        for i, indices_dict in enumerate(barListIn):
+            E = 0
+            name = []
+            
+            for idx in indices_dict.keys():
+                stoi = indices_dict[idx]
+                spe = network.specieslist[idx]
+                E += stoi * spe.Enthalpy(Tem, corr=True)
+                str_stoi = str(stoi) if stoi != 1 else ''
+                name.append(str_stoi + spe.name)
+            if i == 0 and shift:
+                E0 = E
+            E = E - E0
+            name = '+'.join(name)
+            barList.append({'E': E, 'name':name})
+        
+        
+        
+        connectorList = []
+        for i, indices in enumerate(connListIn):
+            name = []
+            
+            # Needed Setting
+            idx = indices['index']
+            left = indices['left']
+            right = indices['right']
+            dirc = indices.get('dirc', 1)
+            # Default Setting
+            shape = indices.get('shape', 'quad')
+            
+            rxn = network.reactionlist[idx]
+            E = barList[left]['E'] + rxn.deltaEa(Tem, dirc)
+            
+            left = barList[left]['name']
+            right = barList[right]['name']
+            
+            name = rxn.name + '=' + left + '_' + 'right'
+            connectorList.append({'E': E, 'name':name, 'left': left, 'right': right, 'shape': shape})
+
+        mainBarName = [barList[i]['name'] for i in mainBarIndex]
+        sideBarName = [barList[i]['name'] for i in sideBarIndex]            
+        mainConnName = [connectorList[i]['name'] for i in mainConnIndex]
+        sideConnName = [connectorList[i]['name'] for i in sideConnIndex]
+        
+        pes = {}
+        pes["barList"] = barList
+        pes["connectList"] = connectorList
+        pes["mainBar"] = mainBarName
+        pes["mainConnect"] = mainConnName
+        pes["sideConnect"] = sideConnName
+        
+        # TO Json file
+        import json
+        with open('pesFile.pes', 'w') as fp:
+            json.dump(pes, fp, indent=4)
+            
+        
+    
+def assign_correction(network, dE):
+    dEa_index = network.dEa_index
+    dBE_index = network.dBE_index
+    Ea = dE[:network._NEa]
+    BE = dE[network._NEa:]
+    # Assign correction on species
+    for i, spe in enumerate(network.specieslist):
+        if i not in dBE_index:
+            spe.dE = 0
+        else:
+            spe.dE = BE[dBE_index.index(i)]
+
+    # Assign correction on reactions
+    for j, rxn in enumerate(network.reactionlist):
+        if j not in dEa_index:
+            rxn.dE = 0
+        else:
+            rxn.dE = Ea[dEa_index.index(j)]
