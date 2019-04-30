@@ -19,6 +19,8 @@ class CSTRCondition(object):
         self.SimulationTime = 0
         self.PartialPressure = {}        # Dictionary to store the partial pressure of gas phase species
         self.TurnOverFrequency = {}      # Dictionary to store outlet turnover frequency
+        self.InitCoverage = {}
+        self.ExtraEvidence = {}
 
     def __repr__(self):
         return self.name
