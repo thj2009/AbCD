@@ -108,7 +108,7 @@ class CSTR(KineticModel):
 
         Fint = cas.Integrator('Fint', 'cvodes', self._dae_, opts)
         
-        if condition.InitCoverage == {}
+        if condition.InitCoverage == {}:
             x0 = [0] * (self.nspe - 1) + [1]
         else:
             # Construct Coverage
