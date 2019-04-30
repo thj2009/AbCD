@@ -20,7 +20,7 @@ class CSTRCondition(object):
         self.PartialPressure = {}        # Dictionary to store the partial pressure of gas phase species
         self.TurnOverFrequency = {}      # Dictionary to store outlet turnover frequency
         self.InitCoverage = {}
-        self.ExtraEvidence = {}
+        self.Coverage = {}
 
     def __repr__(self):
         return self.name
@@ -107,8 +107,12 @@ class CSTR(KineticModel):
         opts['max_num_steps'] = 1e5
 
         Fint = cas.Integrator('Fint', 'cvodes', self._dae_, opts)
-
-        x0 = [0] * (self.nspe - 1) + [1]
+        
+        if condition.InitCoverage == {}
+            x0 = [0] * (self.nspe - 1) + [1]
+        else:
+            # Construct Coverage
+            pass
 
         # Partial Pressure
         Pinlet = np.zeros(self.ngas)
@@ -203,14 +207,17 @@ class CSTR(KineticModel):
         else:
             opts = fwd_NoSensitivity_option(reltol=reltol)
         Fint = cas.Integrator('Fint', 'cvodes', self._dae_, opts)
-
-        x0 = [0] * (self.nspe - 1) + [1]
+        
         evidence = 0
         for condition in conditionlist:
             TotalPressure = condition.TotalPressure
             TotalFlow = condition.TotalFlow
             Tem = condition.Temperature
-
+            if condition.InitCoverage == {}:
+                x0 = [0] * (self.nspe - 1) + [1]
+            else:
+                # TODO: construct coverage
+                pass
             # Partial Pressure
             Pinlet = np.zeros(self.ngas)
             for idx, spe in enumerate(self.specieslist):
@@ -238,6 +245,13 @@ class CSTR(KineticModel):
                             evidence += (dev * dev) * lowSurf
                         else:
                             evidence += (dev * dev)/err**2
+                if spe.phase == 'surface':
+                    cov = F_sim['xf'][idx]
+                    if str(spe) in condition.Coverage.keys():
+                        exp_cov = condition.Coverage[str(spe)]
+                        cov_err = 0.05
+                        dev = cov - exp_cov
+                        evidence += (dev * dev)/cov_err**2
         self._evidence_ = evidence
         # print(evidence)
         return evidence
