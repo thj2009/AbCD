@@ -30,17 +30,16 @@ class CSTRCondition(object):
         Return the detial representation of the reaction condition
         '''
         out = ''
-        out += self.name
-        out += 'Temperature = %.2f K' %(self.Temperature)
-        out += 'Total Flow rate = %.2e s-1' %(self.TotalFlow)
-        out += 'Simulation time = %.2e s' %(self.SimulationTime)
-        out += 'Inlet Pressure (atm): %.2e' %(self.TotalPressure)
+        out += self.name + '\n'
+        out += 'Temperature = %.2f K' %(self.Temperature) + '\n'
+        out += 'Total Flow rate = %.2e s-1' %(self.TotalFlow) + '\n'
+        out += 'Simulation time = %.2e s' %(self.SimulationTime) + '\n'
+        out += 'Inlet Pressure (atm): %.2e' %(self.TotalPressure) + '\n'
         for key, value in self.PartialPressure.items():
-            out += '    {0:<10s} {1:<10.2e}'.format(key, value)
-        out += 'Experiment Outlet'
+            out += '    {0:<10s} {1:<10.2e}'.format(key, value) + '\n'
+        out += 'Experiment Outlet' + '\n'
         for key, value in self.TurnOverFrequency.items():
-            out += '    {0:<10s} {1:<10.2e}'.format(key, value)
-        out += '\n'
+            out += '    {0:<10s} {1:<10.2e}'.format(key, value) + '\n'
         return out
 
 
@@ -127,11 +126,11 @@ class CSTR(KineticModel):
             if spe.phase == 'gaseous':
                 tor[str(spe)] = float(Pinlet[idx]/TotalPressure * TotalFlow - F_sim['xf'][idx])
 
-        result = {}
+
         # Detailed Reaction network data
         # Evaluate partial pressure and surface coverage
-        self.pressure_value = (F_sim['xf'][:self.ngas]/TotalFlow * TotalPressure).full().T[0].tolist()
-        self.coverage_value = F_sim['xf'][self.ngas:].full().T[0].tolist()
+        self.pressure_value = list((F_sim['xf'][:self.ngas]/TotalFlow * TotalPressure).full().T[0])
+        self.coverage_value = list(F_sim['xf'][self.ngas:].full().T[0])
         
         
         # Evaluate Reaction Rate automatically save to Rate attribute
@@ -144,6 +143,7 @@ class CSTR(KineticModel):
         rate_fxn.setInput(F_sim['xf'], 'i0')
         rate_fxn.setInput(P_dae, 'i1')
         rate_fxn.evaluate()
+        self.rate_value = {}
         self.rate_value['rnet'] = rate_fxn.getOutput('o0').full().T[0].tolist()
         self.rate_value['rfor'] = rate_fxn.getOutput('o1').full().T[0].tolist()
         self.rate_value['rrev'] = rate_fxn.getOutput('o2').full().T[0].tolist()
@@ -155,8 +155,9 @@ class CSTR(KineticModel):
         ene_fxn.setInput(F_sim['xf'], 'i0')
         ene_fxn.setInput(P_dae, 'i1')
         ene_fxn.evaluate()
-        self.energy_value['activation'] = ene_fxn.getOutput('o0').full().T[0].tolist()
-        self.energy_value['enthalpy'] = ene_fxn.getOutput('o1').full().T[0].tolist()
+        self.energy_value = {}
+        self.energy_value['activation'] = list(ene_fxn.getOutput('o0').full().T[0])
+        self.energy_value['enthalpy'] = list(ene_fxn.getOutput('o1').full().T[0])
         
         # Evaluate Equilibrium Constant and Rate Constant
         k_fxn = cas.SXFunction('k_fxn', [x, p],
@@ -167,18 +168,21 @@ class CSTR(KineticModel):
         k_fxn.setInput(F_sim['xf'], 'i0')
         k_fxn.setInput(P_dae, 'i1')
         k_fxn.evaluate()
-        self.equil_rate_const_value['Keq'] = k_fxn.getOutput('o0').full().T[0].tolist()
-        self.equil_rate_const_value['Qeq'] = k_fxn.getOutput('o1').full().T[0].tolist()
-        self.equil_rate_const_value['kf'] = k_fxn.getOutput('o2').full().T[0].tolist()
-        self.equil_rate_const_value['kr'] = k_fxn.getOutput('o3').full().T[0].tolist()
+        self.equil_rate_const_value = {}
+        self.equil_rate_const_value['Keq'] = list(k_fxn.getOutput('o0').full().T[0])
+        self.equil_rate_const_value['Qeq'] = list(k_fxn.getOutput('o1').full().T[0])
+        self.equil_rate_const_value['kf'] = list(k_fxn.getOutput('o2').full().T[0])
+        self.equil_rate_const_value['kr'] = list(k_fxn.getOutput('o3').full().T[0])
         
         # RESULT
+        result = {}
         result['pressure'] = self.pressure_value
         result['coverage'] = self.coverage_value
         result['rate'] = self.rate_value
         result['energy'] = self.energy_value
         result['equil_rate'] = self.equil_rate_const_value
 
+        # TODO: degree of rate control
         return tor, result
     
     def condilist_fwd_simul(self, dE_start, conditionlist,
@@ -386,11 +390,11 @@ class CSTR(KineticModel):
         prior_prev = np.exp(-float(prob_fxn.getOutput('o1')))
         posterior_prev = likeli_prev * prior_prev
         
-        out += '{0:^10s}  {1:^15s}  {2:^15s}  {3:^15s}  {4:^15s}'.\
-              format('step', 'prior', 'likelihood', 'posterior', 'accept%') + '\n'
+        out += '{0:^10s}  {1:^15s}  {2:^15s}  {3:^15s}  {4:^15s}  {5:^15s}'.\
+              format('step', 'prior', 'likelihood', 'posterior', 'accept%', 'infeasi%') + '\n'
         out += '==' * 30 + '\n'
-        print('{0:^10s}  {1:^15s}  {2:^15s}  {3:^15s}  {4:^15s}'.\
-              format('step', 'prior', 'likelihood', 'posterior', 'accept%'))
+        print('{0:^10s}  {1:^15s}  {2:^15s}  {3:^15s}  {4:^15s}  {5:15s}'.\
+              format('step', 'prior', 'likelihood', 'posterior', 'accept%', 'infeasi%'))
         print('==' * 30)
         tor_dis, result_dis = [], []
         if save_result:
@@ -399,15 +403,15 @@ class CSTR(KineticModel):
         Edis = []
         Eprev = np.copy(dE_start)
         
-        jump = 0
+        jump, infeasi = 0, 0
         for i in range(ntot):
             if i % step_write == 0:
-                out += '{0:^10d}  {1:^15.2e}  {2:^15.2e}  {3:^15.2e}  {4:^15.2f}'.\
+                out += '{0:^10d}  {1:^15.2e}  {2:^15.2e}  {3:^15.2e}  {4:^15.2f}  {5:^15.2f}'.\
                         format(i, prior_prev, likeli_prev, posterior_prev,
-                               jump/float(i+1)*100) + '\n'
-                print('{0:^10d}  {1:^15.2e}  {2:^15.2e}  {3:^15.2e}  {4:^15.2f}'.\
+                               jump/float(i+1)*100, infeasi/float(i+1)*100) + '\n'
+                print('{0:^10d}  {1:^15.2e}  {2:^15.2e}  {3:^15.2e}  {4:^15.2f} {5:^15.2f}'.\
                         format(i, prior_prev, likeli_prev, posterior_prev,
-                               jump/float(i+1)*100))
+                               jump/float(i+1)*100, infeasi/float(i+1)*100))
             Estar = _sample(Eprev, transi_matrix, sample_method)
             
             # Define Constarint: True: Satisfy // False: not Satisfy
@@ -442,12 +446,12 @@ class CSTR(KineticModel):
                         # OPTION: Evaluate the reaction kinetics
                         if save_result:
                             tor_prev, result_prev = self.condilist_fwd_simul(Estar, conditionlist)
-                        jump+=1
+                        jump += 1
                     else:
                         # REJECT
                         pass
                 except:
-                    print('not feasible')
+                    infeasi += 1
                     pass
             if i >= nbuf:
                 Edis.append(Eprev)
@@ -478,7 +482,7 @@ def _sample(dE_start, transi_matrix, sample_method):
     return list(newE)
 
 def fwd_sensitivity_option(tf=5000, reltol=1e-8,
-						   fwdtol=1e-4, adjtol=1e-4, abs_rel=1e-2):
+                           fwdtol=1e-4, adjtol=1e-4, abs_rel=1e-2):
     '''
     Options pass to CVODES for sensitivity analysis
     '''

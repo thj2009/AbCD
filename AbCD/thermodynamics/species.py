@@ -85,6 +85,15 @@ class GasSpecies(Species):
     def __repr__(self):
         return self.formula + '(g)'
 
+    def unicode_repr(self):
+        newformula = r''
+        for s in self.formula:
+            if s in [str(i) for i in range(10)]:
+                newformula += '$_' + s + '$'
+            else:
+                newformula += s
+        return newformula + '(g)'
+
 class SurfaceSpecies(Species):
     def __init__(self, name=''):
         Species.__init__(self, name)
@@ -95,6 +104,15 @@ class SurfaceSpecies(Species):
 
     def __repr__(self):
         return self.formula + self.denticity * '*'
+
+    def unicode_repr(self):
+        newformula = r''
+        for s in self.formula:
+            if s in [str(i) for i in range(10)]:
+                newformula += '$_' + s + '$'
+            else:
+                newformula += s
+        return newformula + self.denticity * '*'
 
     def Entropy_2D(self, temp=273.15):
         '''

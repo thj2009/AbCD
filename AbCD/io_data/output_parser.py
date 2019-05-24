@@ -1,7 +1,7 @@
 from AbCD import ActiveSite, GasSpecies, SurfaceSpecies, Reaction
 from AbCD import CSTRCondition, VacTPDcondition, BATCHcondition
 from AbCD.utils import get_index_site, get_index_species, get_index_reaction
-
+import numpy as np
 
 class Out_data(object):
 
@@ -164,14 +164,13 @@ class Out_data(object):
         
         print(out)
 
-            
-            
     @staticmethod
     def toVizPES(network, dE, barListIn=[], connListIn=[], 
                  mainBarIndex=[], sideBarIndex=[],
                  mainConnIndex=[], sideConnIndex=[],
-                 setting={},
-                 Tem=298.15, e_type='H', shift=True):
+                 neglect_h='False',
+                 Tem=298.15, e_type='H', shift=True,
+                 pesname='pesFile.pes'):
         '''
         Write network information to CataViz for Potential Energy Surface 
         '''
@@ -190,15 +189,14 @@ class Out_data(object):
                 stoi = indices_dict[idx]
                 spe = network.specieslist[idx]
                 E += stoi * spe.Enthalpy(Tem, corr=True)
-                str_stoi = str(stoi) if stoi != 1 else ''
-                name.append(str_stoi + spe.name)
+                if not (neglect_h and str(spe) == 'H*'):
+                    str_stoi = str(stoi) if stoi != 1 else ''
+                    name.append(str_stoi + spe.unicode_repr())
             if i == 0 and shift:
                 E0 = E
             E = E - E0
-            name = '+'.join(name)
+            name = '\n+'.join(name)
             barList.append({'E': E, 'name':name})
-        
-        
         
         connectorList = []
         for i, indices in enumerate(connListIn):
@@ -235,11 +233,117 @@ class Out_data(object):
         
         # TO Json file
         import json
-        with open('pesFile.pes', 'w') as fp:
+        with open(pesname, 'w') as fp:
             json.dump(pes, fp, indent=4)
+
+    @staticmethod
+    def toVizPES_percentile(network, dEs, percentile, barListIn=[], connListIn=[], 
+                 mainBarIndex=[], sideBarIndex=[],
+                 mainConnIndex=[], sideConnIndex=[],
+                 setting={}, N=1000,
+                 Tem=298.15, e_type='H', shift=True,
+                 pesname='pesFile.pes'):
+        '''
+        Write network information to CataViz for Potential Energy Surface 
+        '''
+        assert percentile >= 0 and percentile <= 100
+        ndata, _ = dEs.shape
+        dn = int(ndata / N)
+        bar_ensemble = []; connect_ensemble = []
+        for dE in dEs[::dn, :]:
+            assign_correction(network, dE)
+
+            # CREATE BARLIST
+            barE, barList = [], []
+            E0 = 0
+            for i, indices_dict in enumerate(barListIn):
+                E = 0
+                for idx in indices_dict.keys():
+                    stoi = indices_dict[idx]
+                    spe = network.specieslist[idx]
+                    E += stoi * spe.Enthalpy(Tem, corr=True)
+                if i == 0 and shift:
+                    E0 = E
+                E = E - E0
+                barE.append(E)
+                barList.append({'E': E, 'name': ""})
+            bar_ensemble.append(barE)
             
+            connectE = []
+            for i, indices in enumerate(connListIn):
+                # Needed Setting
+                idx = indices['index']
+                left = indices['left']
+                right = indices['right']
+                dirc = indices.get('dirc', 1)
+                # Default Setting
+                shape = indices.get('shape', 'quad')
+                
+                rxn = network.reactionlist[idx]
+                E = barList[left]['E'] + rxn.deltaEa(Tem, dirc)
+                connectE.append(E)
+            connect_ensemble.append(connectE)
+
+        # get the percentile energy
+        bar_ensemble = np.array(bar_ensemble)
+        connect_ensemble = np.array(connect_ensemble)
+        bar_percent = np.percentile(bar_ensemble, percentile, axis=0)
+        connect_percent = np.percentile(connect_ensemble, percentile, axis=0)
+        # build output
+
         
-    
+        # CREATE BARLIST
+        barList = []
+        E0 = 0
+        for i, indices_dict in enumerate(barListIn):
+            E = 0
+            name = []
+            for idx in indices_dict.keys():
+                stoi = indices_dict[idx]
+                spe = network.specieslist[idx]
+                str_stoi = str(stoi) if stoi != 1 else ''
+                name.append(str_stoi + spe.name)
+            E = bar_percent[i]
+            name = '+\n'.join(name)
+            barList.append({'E': E, 'name':name})
+        
+        connectorList = []
+        for i, indices in enumerate(connListIn):
+            name = []
+            
+            # Needed Setting
+            idx = indices['index']
+            left = indices['left']
+            right = indices['right']
+            dirc = indices.get('dirc', 1)
+            # Default Setting
+            shape = indices.get('shape', 'quad')
+            rxn = network.reactionlist[idx]
+            E = connect_percent[i]
+            left = barList[left]['name']
+            right = barList[right]['name']
+            
+            name = rxn.name + '=' + left + '_' + 'right'
+            connectorList.append({'E': E, 'name':name, 'left': left, 'right': right, 'shape': shape})
+
+        mainBarName = [barList[i]['name'] for i in mainBarIndex]
+        sideBarName = [barList[i]['name'] for i in sideBarIndex]            
+        mainConnName = [connectorList[i]['name'] for i in mainConnIndex]
+        sideConnName = [connectorList[i]['name'] for i in sideConnIndex]
+        
+        pes = {}
+        pes["barList"] = barList
+        pes["connectList"] = connectorList
+        pes["mainBar"] = mainBarName
+        pes["mainConnect"] = mainConnName
+        pes["sideConnect"] = sideConnName
+        
+        # TO Json file
+        import json
+        with open(pesname, 'w') as fp:
+            json.dump(pes, fp, indent=4)
+
+
 def assign_correction(network, dE):
     dEa_index = network.dEa_index
     dBE_index = network.dBE_index
