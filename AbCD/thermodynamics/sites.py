@@ -29,5 +29,7 @@ class ActiveSite(object):
         '''
         Area per site, used for 2D translation entropy calculation
         '''
-        # TODO add method to compatible to 2D entropy calculation
-        pass
+        a = self.lattice_constant['a']
+        d = a / np.sqrt(2)
+        area = np.sqrt(3) / 2 * d**2
+        return area

@@ -143,7 +143,9 @@ class In_data(object):
                 condi.TotalSite = data['TotalSite']
                 condi.SimulationTime = data['SimulationTime']
                 condi.PartialPressure = data['PartialPressure']
-                condi.TurnOverFrequency = data['TurnOverFrequency']
+                condi.TurnOverFrequency = data.get('TurnOverFrequency', {})
+                condi.InitCoverage = data.get('InitCoverage', {})
+                condi.Coverage = data.get('Coverage', {})
             elif data['type'] == 'DynamicCSTR':
                 condi = DynamicCSTRCondition()
                 condi.name = data['name']

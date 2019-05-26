@@ -17,6 +17,7 @@ class Reaction(object):
         self.product = []           # list of product
         self.kinetic = {'type': '', 'data': {}}      # Dictionary including kinetic type and parameter
         self.dft_data = {'omega': 0, 'deltaE': 0, 'Ef': 0, 'prefactor': 0}
+        self.dE = 0
 
     def __repr__(self):
         rxn = ''
@@ -59,12 +60,19 @@ class Reaction(object):
             Arr['n'] = 1
         return Arr
 
-    def TS_Enthalpy(self, temp=273.15):
+    def TS_Enthalpy(self, temp=273.15, corr=False):
         if self.kinetic['type'] == 'Arr':
-            Hts = self.IS_Enthalpy(temp)
+            Hts = self.IS_Enthalpy(temp, corr)
             Hts += self.kinetic['data']['Ea']
+            if corr:
+                Hts += self.dE
         elif self.kinetic['type'] == 'Shomate':
-            Hts = _cal.Enthalpy(self.kinetic, temp)
+            if corr:
+                Ea0 = _cal.Enthalpy(self.kinetic, temp) - self.IS_Enthalpy(temp)
+                Hts = self.IS_Enthalpy(temp, corr)
+                Hts += Ea0 + self.dE
+            else:
+                Hts = _cal.Enthalpy(self.kinetic, temp)
         return Hts
 
     def TS_Entropy(self, temp=273.15):
@@ -76,13 +84,13 @@ class Reaction(object):
             Sts = _cal.Entropy(self.kinetic, temp)
         return Sts
 
-    def IS_Enthalpy(self, temp=273.15):
+    def IS_Enthalpy(self, temp=273.15, corr=False):
         '''
         Calculate the enthalpy of Initial state using shomate parameter
         '''
         His = 0
         for item in self.reactant:
-            His += item[1]*item[0].Enthalpy(temp)
+            His += item[1]*item[0].Enthalpy(temp, corr)
         return His
 
     def IS_Entropy(self, temp=273.15):
@@ -94,13 +102,13 @@ class Reaction(object):
             Sis += item[1]*item[0].Entropy(temp)
         return Sis
 
-    def FS_Enthalpy(self, temp=273.15):
+    def FS_Enthalpy(self, temp=273.15, corr=False):
         '''
         Calculate the entropy of Final state using shomate parameter
         '''
         Hfs = 0
         for item in self.product:
-            Hfs += item[1]*item[0].Enthalpy(temp)
+            Hfs += item[1]*item[0].Enthalpy(temp, corr)
         return Hfs
 
     def FS_Entropy(self, temp=273.15):
@@ -112,14 +120,14 @@ class Reaction(object):
             Sfs += item[1]*item[0].Entropy(temp)
         return Sfs
 
-    def dH_Enthalpy(self, temp=273.15):
-        return self.FS_Enthalpy(temp) - self.IS_Enthalpy(temp)
+    def dH_Enthalpy(self, temp=273.15, corr=False):
+        return self.FS_Enthalpy(temp, corr) - self.IS_Enthalpy(temp, corr)
 
     def dS_Entropy(self, temp=273.15):
         return self.FS_Entropy(temp) - self.IS_Entropy(temp)
 
-    def dG_GibbsFreeEnergy(self, temp=273.15):
-        dH = self.dH_Enthalpy(temp)
+    def dG_GibbsFreeEnergy(self, temp=273.15, corr=False):
+        dH = self.dH_Enthalpy(temp, corr)
         dS = self.dS_Entropy(temp)
         dG = dH - temp / 1000. * dS
         return dG
@@ -131,3 +139,11 @@ class Reaction(object):
         for item in self.reactant:
             dH -= item[1]*item[0].dE
         return dH
+    
+    def deltaEa(self, Tem=298.15, dirc=1):
+        if dirc == 1:
+            dEa = self.TS_Enthalpy(Tem, True) - self.IS_Enthalpy(Tem, True)
+        elif dirc == -1:
+            dEa = self.TS_Enthalpy(Tem, True) - self.FS_Enthalpy(Tem, True)
+        return dEa
+    

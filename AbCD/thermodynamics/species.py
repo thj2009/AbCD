@@ -31,7 +31,7 @@ class Species(object):
                 element[ss] += stoi
         self._element = element
 
-    def Enthalpy(self, temp=273.15):
+    def Enthalpy(self, temp=273.15, corr=False):
         '''
         Calculate Enthapy or heat of formation at specific tempperature
         Unit: kJ/mol
@@ -39,6 +39,8 @@ class Species(object):
         H = 0
         if bool(self.thermo['data']):
             H = _cal.Enthalpy(self.thermo, temp)
+            if corr:
+                H += self.dE
         return H
 
     def Entropy(self, temp=273.15):
@@ -83,6 +85,15 @@ class GasSpecies(Species):
     def __repr__(self):
         return self.formula + '(g)'
 
+    def unicode_repr(self):
+        newformula = r''
+        for s in self.formula:
+            if s in [str(i) for i in range(10)]:
+                newformula += '$_' + s + '$'
+            else:
+                newformula += s
+        return newformula + '(g)'
+
 class SurfaceSpecies(Species):
     def __init__(self, name=''):
         Species.__init__(self, name)
@@ -93,6 +104,15 @@ class SurfaceSpecies(Species):
 
     def __repr__(self):
         return self.formula + self.denticity * '*'
+
+    def unicode_repr(self):
+        newformula = r''
+        for s in self.formula:
+            if s in [str(i) for i in range(10)]:
+                newformula += '$_' + s + '$'
+            else:
+                newformula += s
+        return newformula + self.denticity * '*'
 
     def Entropy_2D(self, temp=273.15):
         '''
@@ -115,3 +135,7 @@ class SurfaceSpecies(Species):
         else:
             S2D = 0
         return S2D
+
+    def collisionTheory(self):
+        A = 1. / np.sqrt(2 * np.pi * self.mass * _const.u_2_kg * _const.kb) * self.site.area() * 101325
+        return A
