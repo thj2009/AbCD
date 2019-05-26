@@ -256,7 +256,7 @@ class CSTR(KineticModel):
                     cov = F_sim['xf'][idx]
                     if str(spe) in condition.Coverage.keys():
                         exp_cov = condition.Coverage[str(spe)]
-                        dev = cov - exp_cov
+                        dev = cas.log(cov/exp_cov)
                         evidence += (dev * dev)/cov_err**2
         self._evidence_ = evidence
         return evidence
