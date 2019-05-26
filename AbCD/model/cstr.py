@@ -19,8 +19,8 @@ class CSTRCondition(object):
         self.SimulationTime = 0
         self.PartialPressure = {}        # Dictionary to store the partial pressure of gas phase species
         self.TurnOverFrequency = {}      # Dictionary to store outlet turnover frequency
-        self.InitCoverage = {}
-        self.Coverage = {}
+        self.InitCoverage = {}           # Initial Coverage 
+        self.Coverage = {}              # Coverage from experimental measurement
 
     def __repr__(self):
         return self.name
@@ -117,7 +117,7 @@ class CSTR(KineticModel):
         Pinlet = np.zeros(self.ngas)
         for idx, spe in enumerate(self.specieslist):
             if spe.phase == 'gaseous':
-                Pinlet[idx] = condition.PartialPressure[str(spe)]
+                Pinlet[idx] = condition.PartialPressure[str(spe)] if str(spe) in condition.PartialPressure.keys() else 0
         P_dae = np.hstack([dE_start, Pinlet, Tem, TotalFlow])
         F_sim = Fint(x0=x0, p=P_dae)
 
@@ -131,8 +131,7 @@ class CSTR(KineticModel):
         # Evaluate partial pressure and surface coverage
         self.pressure_value = list((F_sim['xf'][:self.ngas]/TotalFlow * TotalPressure).full().T[0])
         self.coverage_value = list(F_sim['xf'][self.ngas:].full().T[0])
-        
-        
+
         # Evaluate Reaction Rate automatically save to Rate attribute
         x = self._x
         p = self._p
@@ -198,20 +197,25 @@ class CSTR(KineticModel):
         return tor_list, result_list
             
     def evidence_construct(self, dE_start, conditionlist, evidence_info, sensitivity=True):
-
-        err_type = evidence_info['type']
-        err = evidence_info['err']
+        # simulation option
         reltol = evidence_info.get('reltol', 1e-8)
         fwdtol = evidence_info.get('fwdtol', 1e-4)
         adjtol = evidence_info.get('adjtol', 1e-4)
+        # error value
+        err_type = evidence_info['type']
+        err = evidence_info['err']
         lowSurf = evidence_info.get('lowSurf', 1e4)
+        lowSurf_thres = evidence_info.get('lowSurf_thres', 1e-5)
+        cov_err = evidence_info.get('cov_err', 0.05)
+
+        # Initialize simulator
         Pnlp = self._Pnlp
         if sensitivity:
             opts = fwd_sensitivity_option(reltol=reltol, adjtol=adjtol, fwdtol=fwdtol)
         else:
             opts = fwd_NoSensitivity_option(reltol=reltol)
         Fint = cas.Integrator('Fint', 'cvodes', self._dae_, opts)
-        
+
         evidence = 0
         for condition in conditionlist:
             TotalPressure = condition.TotalPressure
@@ -220,22 +224,23 @@ class CSTR(KineticModel):
             if condition.InitCoverage == {}:
                 x0 = [0] * (self.nspe - 1) + [1]
             else:
-                # TODO: construct coverage
+                # TODO: construct initial coverage
                 pass
-            # Partial Pressure
+            # construct initial partial pressure
             Pinlet = np.zeros(self.ngas)
             for idx, spe in enumerate(self.specieslist):
                 if spe.phase == 'gaseous':
-                    Pinlet[idx] = condition.PartialPressure[str(spe)]
+                    Pinlet[idx] = condition.PartialPressure[str(spe)] if str(spe) in condition.PartialPressure.keys() else 0
+            # run simulation
             P_dae = cas.vertcat([Pnlp, Pinlet, Tem, TotalFlow])
             F_sim = Fint(x0=x0, p=P_dae)
             for idx, spe in enumerate(self.specieslist):
                 if spe.phase == 'gaseous':
-                    # TOR
+                    # construct evidence with turnover frequency
                     tor = Pinlet[idx]/TotalPressure * TotalFlow - F_sim['xf'][idx]
                     if str(spe) in condition.TurnOverFrequency.keys():
                         exp_tor = condition.TurnOverFrequency[str(spe)]
-                        if err_type == 'abs' or abs(exp_tor) <= 1e-5:
+                        if err_type == 'abs' or abs(exp_tor) <= lowSurf_thres:
                             dev = tor -  exp_tor
                         elif err_type == 'rel':
                             dev = 1 - tor/(exp_tor)
@@ -243,9 +248,7 @@ class CSTR(KineticModel):
                             dev = cas.log(tor/exp_tor)
                         else:
                             pass
-                        if abs(exp_tor) <= 1e-5:
-                            # dev = cas.log(tor/exp_tor)
-                            # dev = 1 - tor/(exp_tor)
+                        if abs(exp_tor) <= lowSurf_thres:
                             evidence += (dev * dev) * lowSurf
                         else:
                             evidence += (dev * dev)/err**2
@@ -253,11 +256,9 @@ class CSTR(KineticModel):
                     cov = F_sim['xf'][idx]
                     if str(spe) in condition.Coverage.keys():
                         exp_cov = condition.Coverage[str(spe)]
-                        cov_err = 0.05
                         dev = cov - exp_cov
                         evidence += (dev * dev)/cov_err**2
         self._evidence_ = evidence
-        # print(evidence)
         return evidence
 
     def prior_construct(self, prior_info):
@@ -279,7 +280,6 @@ class CSTR(KineticModel):
             _BE = Pnlp[self._NEa:]
             _Ea = Pnlp[:self._NEa]
             Eamean = cas.mul(linear_BE2Ea, _BE)
-            
             dev_BE = _BE - BEmean
             dev_Ea = _Ea - Eamean
             prior = cas.mul(cas.mul(dev_BE.T, np.linalg.inv(BEcov)), dev_BE) + \
@@ -382,6 +382,8 @@ class CSTR(KineticModel):
         likeli = self.evidence_construct(dE_start, conditionlist, evidence_info, sensitivity=False)
         prior = self.prior_construct(prior_info)
         
+        if constraint:
+            dE_start = self.CorrThermoConsis(dE_start)
         prob_fxn = cas.MXFunction('prob_fxn', [Pnlp], [likeli, prior])
         prob_fxn.setInput(dE_start, 'i0')
         prob_fxn.evaluate()
