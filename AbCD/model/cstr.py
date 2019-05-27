@@ -387,15 +387,18 @@ class CSTR(KineticModel):
         prob_fxn.setInput(dE_start, 'i0')
         prob_fxn.evaluate()
         
-        likeli_prev = np.exp(-float(prob_fxn.getOutput('o0')))
-        prior_prev = np.exp(-float(prob_fxn.getOutput('o1')))
-        posterior_prev = likeli_prev * prior_prev
+        log_likeli_prev = -float(prob_fxn.getOutput('o0'))
+        log_prior_prev = -float(prob_fxn.getOutput('o1'))
+        log_posterior_prev = log_likeli_prev + log_prior_prev
+        #likeli_prev = np.exp(-float(prob_fxn.getOutput('o0')))
+        #prior_prev = np.exp(-float(prob_fxn.getOutput('o1')))
+        #posterior_prev = likeli_prev * prior_prev
         
         out += '{0:^10s}  {1:^15s}  {2:^15s}  {3:^15s}  {4:^15s}  {5:^15s}'.\
-              format('step', 'prior', 'likelihood', 'posterior', 'accept%', 'infeasi%') + '\n'
+              format('step', 'log(prior)', 'log(likelihood)', 'log(posterior)', 'accept%', 'infeasi%') + '\n'
         out += '==' * 30 + '\n'
         print('{0:^10s}  {1:^15s}  {2:^15s}  {3:^15s}  {4:^15s}  {5:15s}'.\
-              format('step', 'prior', 'likelihood', 'posterior', 'accept%', 'infeasi%'))
+              format('step', 'log(prior)', 'log(likelihood)', 'log(posterior)', 'accept%', 'infeasi%'))
         print('==' * 30)
         tor_dis, result_dis = [], []
         if save_result:
@@ -407,11 +410,11 @@ class CSTR(KineticModel):
         jump, infeasi = 0, 0
         for i in range(ntot):
             if i % step_write == 0:
-                out += '{0:^10d}  {1:^15.2e}  {2:^15.2e}  {3:^15.2e}  {4:^15.2f}  {5:^15.2f}'.\
-                        format(i, prior_prev, likeli_prev, posterior_prev,
+                out += '{0:^10d}  {1:^15.2f}  {2:^15.2f}  {3:^15.2f}  {4:^15.2f}  {5:^15.2f}'.\
+                        format(i, log_prior_prev, log_likeli_prev, log_posterior_prev,
                                jump/float(i+1)*100, infeasi/float(i+1)*100) + '\n'
-                print('{0:^10d}  {1:^15.2e}  {2:^15.2e}  {3:^15.2e}  {4:^15.2f} {5:^15.2f}'.\
-                        format(i, prior_prev, likeli_prev, posterior_prev,
+                print('{0:^10d}  {1:^15.2f}  {2:^15.2f}  {3:^15.2f}  {4:^15.2f} {5:^15.2f}'.\
+                        format(i, log_prior_prev, log_likeli_prev, log_posterior_prev,
                                jump/float(i+1)*100, infeasi/float(i+1)*100))
             Estar = _sample(Eprev, transi_matrix, sample_method)
             
@@ -428,22 +431,28 @@ class CSTR(KineticModel):
                     # Evaluate the posterior distribution
                     prob_fxn.setInput(Estar, 'i0')
                     prob_fxn.evaluate()
-                    
-                    likeli_star = np.exp(-float(prob_fxn.getOutput('o0')))
-                    prior_star = np.exp(-float(prob_fxn.getOutput('o1')))
-                    posterior_star = likeli_star * prior_star
+                    log_likeli_star = -float(prob_fxn.getOutput('o0'))
+                    log_prior_star = -float(prob_fxn.getOutput('o1'))
+                    log_posterior_star = log_likeli_star + log_prior_star
+                    #likeli_star = np.exp(-float(prob_fxn.getOutput('o0')))
+                    #prior_star = np.exp(-float(prob_fxn.getOutput('o1')))
+                    #posterior_star = likeli_star * prior_star
                     if save_result:
                         for condi in conditionlist:
                             pass
                     # Determine accept or reject
                     UU = np.random.uniform()
-                    AA = min(1, posterior_star/posterior_prev)
+                    AA = min(1, np.exp(log_posterior_star - log_posterior_prev))
+                    #AA = min(1, posterior_star / posterior_prev)
                     if UU < AA:
                         # ACCEPT
                         Eprev = np.copy(Estar)
-                        prior_prev = prior_star
-                        likeli_prev = likeli_star
-                        posterior_prev = posterior_star
+                        log_prior_prev = log_prior_star
+                        log_likeli_prev = log_likeli_star
+                        log_posterior_prev = log_posterior_star
+                        #prior_prev = prior_star
+                        #likeli_prev = likeli_star
+                        #posterior_prev = posterior_star
                         # OPTION: Evaluate the reaction kinetics
                         if save_result:
                             tor_prev, result_prev = self.condilist_fwd_simul(Estar, conditionlist)

@@ -4,7 +4,7 @@ from matplotlib.ticker import FormatStrFormatter
 
 def parity_plot(xdata, ydata, xlabel='', ylabel='',
                 parity_line=True, rmse=True, scale='log10',
-                expand=0.1, figsize=(2.5, 2.5), dpi=300, figname=None):
+                expand=0.1, figsize=(2.5, 2.5), dpi=150, figname=None):
     '''
     Parity plot for model fitting
     '''
@@ -43,7 +43,7 @@ def parity_plot(xdata, ydata, xlabel='', ylabel='',
     return fig
 
 def tpd_profile(Tem, Rate, xlabel='', ylabel='',
-                figsize=(3.5, 2.5), dpi=300, figname=None,
+                figsize=(3.5, 2.5), dpi=150, figname=None,
                 r_=None, fig=None, fmt='r-', scale=1):
     if fig is None:
         fig = plt.figure(figsize=figsize, dpi=dpi)
