@@ -1,12 +1,11 @@
-AbCD
+#AbCD
 
-Ab-initio Catalyst Dynamic
+##Ab-initio Catalyst Dynamic
 
 including feature:
 Mean-field Microkinetic Modeling
 Parameter Estimation
-Catalyst Design
-Monte Carlo Simulation (Canonical, Grand Canonical Ensemble)
+Bayesian Inference
 
 author: Huijie Tian
 

@@ -57,3 +57,11 @@ def find_index(index, checklist):
     for i in range(len(checklist)):
         if index == checklist[i]:
             return i
+
+def other_reaction(specieslist, stoi, Tem=298.75):
+    H = 0
+    S = 0
+    for idx, stoi_ in stoi:
+        H += reactionlist[idx].Enthalpy(Tem) * stoi_
+        S += reactionlist[idx].Entropy(Tem) * stoi_
+    return H, S
