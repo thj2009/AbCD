@@ -62,6 +62,6 @@ def other_reaction(specieslist, stoi, Tem=298.75):
     H = 0
     S = 0
     for idx, stoi_ in stoi:
-        H += reactionlist[idx].Enthalpy(Tem) * stoi_
-        S += reactionlist[idx].Entropy(Tem) * stoi_
+        H += specieslist[idx].Enthalpy(Tem) * stoi_
+        S += specieslist[idx].Entropy(Tem) * stoi_
     return H, S

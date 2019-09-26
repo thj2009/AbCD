@@ -192,6 +192,8 @@ class In_data(object):
                 if 'TemProfile' in data.keys():
                     condi.TemProfile = data['TemProfile']
                     condi.RateProfile = data['RateProfile']
+                if 'PeakPosition' in data.keys():
+                    condi.PeakPosition = data['PeakPosition']
             conditionlist.append(condi)
         return conditionlist
 

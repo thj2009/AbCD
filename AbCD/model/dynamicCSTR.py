@@ -14,11 +14,12 @@ class DynamicCSTRCondition(object):
         self.Temperature = 298.15
         self.TotalFlow = 0.00           # unit: s-1
         self.TotalSite = 0.00           # unit: total mole of activesite
-        self.SimulationTime = 0
-        self.Ntime = 1000
-        self.NtimeSS = 100
-        self.timeSS = 10000
+        self.SimulationTime = 0         # simulation time in perturbation time grid
+        self.Ntime = 1000               # number of simulated grid in perturbation
+        self.NtimeSS = 100              # number of simulated grid for SS
+        self.timeSS = 10000             # simulation time for SS
         self.PartialPressure = {}        # Dictionary to store the partial pressure of gas phase species
+        self.tgrid = None
 
     def __repr__(self):
         return self.name
@@ -108,6 +109,7 @@ class DynamicCSTR(KineticModel):
                               np.linspace(timeSS, timeSS + condition.SimulationTime, N))
         else:
             tgrid = np.linspace(0, condition.SimulationTime, N)
+        #print(tgrid[-1])
 #        print(tgrid.shape)
         # ControlSimulator will output on each node of the timegrid
         opts = {}

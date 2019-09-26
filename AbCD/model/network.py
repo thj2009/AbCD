@@ -100,7 +100,7 @@ class SimpleKinetic(ReactionNet):
         self._rfor = None
         self._rrev = None
 
-    def build_kinetic(self, constTem=None):
+    def build_kinetic(self, constTem=None, thermoTem=298.15):
         if constTem is not None:
             Tem = constTem
         else:
@@ -112,7 +112,7 @@ class SimpleKinetic(ReactionNet):
             HH = spe.Enthalpy(Tem)
             SS = spe.Entropy(Tem)
             enthal_spe.append(HH)
-            enthal_spe_cons.append(spe.Enthalpy(298.15))
+            enthal_spe_cons.append(spe.Enthalpy(thermoTem))
             entro_spe.append(SS)
             denthal.append(0)
         # surface species add deviation variable
@@ -134,7 +134,7 @@ class SimpleKinetic(ReactionNet):
             Hreact_cons = 0
             Arr = kine_data['A']
             Ea0 = kine_data['Ea']
-            Ea298 = rxn.Arrhenius(298.15)['Ea']
+            Ea298 = rxn.Arrhenius(thermoTem)['Ea']
             n = kine_data['n']
             if check_index(i, self.dEa_index):
                 ind = find_index(i, self.dEa_index)

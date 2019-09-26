@@ -6,25 +6,8 @@
 "Tf": 800,
 "Beta": 3,
 "Ntime": 2000,
-"InitCoverage": {"H*": 0.16}
-},
-
-{"type": "VacTPD",
-"name": "H2_0.26",
-"T0": 100,
-"Tf": 800,
-"Beta": 3,
-"Ntime": 2000,
-"InitCoverage": {"H*": 0.26}
-},
-
-{"type": "VacTPD",
-"name": "H2_0.35",
-"T0": 100,
-"Tf": 800,
-"Beta": 3,
-"Ntime": 2000,
-"InitCoverage": {"H*": 0.35}
+"InitCoverage": {"H*": 0.16},
+"PeakPosition": {"H2(g)": 325}
 }
 
 ]

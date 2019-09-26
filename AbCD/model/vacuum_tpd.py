@@ -6,7 +6,6 @@ import casadi as cas
 from .network import KineticModel
 from AbCD.utils import get_index_species
 
-
 class TPDcondition(object):
     def __init__(self, name=''):
         self.name = name
@@ -19,6 +18,11 @@ class TPDcondition(object):
         self.TemGrid = None
         self.TemProfile = None
         self.RateProfile = None
+        self.PeakPosition = None
+
+    def __repr__(self):
+        return self.name
+
     def _calSim(self):
         self.SimulationTime = (self.Tf - self.T0) / self.Beta
     def _calGrid(self):
@@ -48,6 +52,9 @@ class VacuumTPD(KineticModel):
         # Derivative and Algebraic variable
         self._d_partP = cas.SX.sym('d_partP', self.ngas)
         self._d_cover = cas.SX.sym('d_cover', self.nsurf)
+
+        self._prior_ = None
+        self.prob_func = None
 
     def initialize(self, scale=1.0, pump_level=1e5, A_V_ratio=1e-3, des_scale=1e-3, constTem=None):
         '''
@@ -100,7 +107,7 @@ class VacuumTPD(KineticModel):
         Fsim.setInput(P_dae, 'p')
         Fsim.evaluate()
         
-        # Evalu
+        # Evaluate
         out = Fsim.getOutput().full()
         return out
 
@@ -111,3 +118,81 @@ class VacuumTPD(KineticModel):
             x0[idx] = condition.InitCoverage[spe]
         x0.append(1 - sum(x0[self.ngas:]))
         return x0
+
+
+    def eval_prob(self, dE, conditionlist, evidence_info, prior_info):
+        # evaluate prior
+        self.prior_construct(prior_info)
+        prob_func = self.prob_func
+        prob_func.setInput(dE, 'i0')
+        prob_func.evaluate()
+        log_prior = -float(prob_func.getOutput('o0'))
+        # evaluate likihood
+        log_likeli = self.eval_likeli(dE, conditionlist, evidence_info)
+        return log_likeli, log_prior
+
+    def eval_likeli(self, dE, conditionlist, evidence_info={}):
+        reltol = evidence_info.get('reltol', 1e-12)
+        abstol = evidence_info.get('abstol', 1e-12)
+
+        err = evidence_info.get('peak_err', 10)
+
+        opts = {}
+        opts['abstol'] = abstol
+        opts['reltol'] = reltol
+        opts['disable_internal_warnings'] = True
+        opts['max_num_steps'] = 1e5
+
+        # Initialize simulator
+        evidence = 0
+        for condition in conditionlist:
+            time = condition.TimeGrid
+            T0 = condition.T0
+            beta = condition.Beta
+            x0 = self.init_condition(condition)
+
+            P_dae = np.hstack([dE, T0, beta])
+
+            Fint = cas.Integrator('Fint', 'cvodes', self._dae_, opts)
+            Fsim = cas.Simulator('Fsim', Fint, time)
+            Fsim.setInput(x0, 'x0')
+            Fsim.setInput(P_dae, 'p')
+            Fsim.evaluate()
+
+            out = Fsim.getOutput().full()
+            # Find the peak
+            for spe, peak_exp in condition.PeakPosition.items():
+                idx = get_index_species(spe, self.specieslist)
+                des = out[idx, :]
+                idx_peak = np.argmax(des)
+                peak_sim = condition.TemGrid[idx_peak]
+                dev = peak_sim - peak_exp
+                evidence += (dev * dev)/err**2
+        return -evidence
+
+    def prior_construct(self, prior_info):
+        Pnlp = self._Pnlp
+        if prior_info['type'] == 'Ridge':
+            L2 = prior_info['L2']
+            prior = cas.mul(Pnlp.T, Pnlp) * L2
+        elif prior_info['type'] == 'Gaussian':
+            mean = prior_info['mean']
+            cov = prior_info['cov']
+            dev = Pnlp - mean
+            prior = cas.mul(cas.mul(dev.T, np.linalg.inv(cov)), dev)
+        elif prior_info['type'] == 'GP':
+            BEmean = prior_info['BEmean']
+            BEcov = prior_info['BEcov']
+            linear_BE2Ea = prior_info['BE2Ea']
+            Eacov = prior_info['Eacov']
+
+            _BE = Pnlp[self._NEa:]
+            _Ea = Pnlp[:self._NEa]
+            Eamean = cas.mul(linear_BE2Ea, _BE)
+            dev_BE = _BE - BEmean
+            dev_Ea = _Ea - Eamean
+            prior = cas.mul(cas.mul(dev_BE.T, np.linalg.inv(BEcov)), dev_BE) + \
+                    cas.mul(cas.mul(dev_Ea.T, np.linalg.inv(Eacov)), dev_Ea)
+        self._prior_ = prior
+        self.prob_func = cas.MXFunction('prob_func', [Pnlp], [prior])
+        return prior

@@ -5,6 +5,7 @@ import numpy as np
 import casadi as cas
 from .network import KineticModel
 import time
+from AbCD.utils import Constant as _const
 
 class CSTRCondition(object):
     '''
@@ -63,7 +64,9 @@ class CSTR(KineticModel):
         self._d_flow = cas.SX.sym('d_flow', self.ngas)
         self._d_cover = cas.SX.sym('d_cover', self.nsurf)
 
-    def initialize(self, tau=1.0, scale=1.0):
+        self.prob_func = None
+
+    def initialize(self, tau=1.0, scale=1.0, Tem=298.15):
         '''
         Build the dae system of transient CSTR model
         :param tau: space time of CSTR model
@@ -71,7 +74,7 @@ class CSTR(KineticModel):
         Ptot = cas.sumRows(self._partP_in)            # Total Pressure
         for i in range(self.ngas):
             self._partP[i] = self._flow[i]/self._Flowtot * Ptot
-        self.build_kinetic()
+        self.build_kinetic(thermoTem=Tem)
         self.build_rate(scale=1)
         for j in range(self.ngas):
             self._d_flow[j] = self._partP_in[j] / Ptot * self._Flowtot \
@@ -91,7 +94,7 @@ class CSTR(KineticModel):
         self._dae_ = dict(x=self._x, p=self._p, ode=self._xdot)
 
     def fwd_simulation(self, dE_start, condition, detail=True,
-                       reltol=1e-8, abstol=1e-10):
+                       reltol=1e-8, abstol=1e-10, DRX=False, drc_opt={}):
 
         TotalPressure = condition.TotalPressure
         TotalFlow = condition.TotalFlow
@@ -172,7 +175,25 @@ class CSTR(KineticModel):
         self.equil_rate_const_value['Qeq'] = list(k_fxn.getOutput('o1').full().T[0])
         self.equil_rate_const_value['kf'] = list(k_fxn.getOutput('o2').full().T[0])
         self.equil_rate_const_value['kr'] = list(k_fxn.getOutput('o3').full().T[0])
-        
+
+        xrc = []
+        # TODO: degree of rate control
+        if DRX:
+            delG = drc_opt.get('delG', 1)
+            ref_species = drc_opt.get('ref', 'CO(g)')
+            tor0 = tor[ref_species]
+            for idx, j in enumerate(self.dEa_index):
+                dP = np.copy(dE_start)
+                dP[idx] += delG
+                # Partial Pressure
+                P_dae = np.hstack([dP, Pinlet, Tem, TotalFlow])
+                F_sim = Fint(x0=x0, p=P_dae)
+                tor_d = {}
+                for idx, spe in enumerate(self.specieslist):
+                    if spe.phase == 'gaseous':
+                        tor_d[str(spe)] = float(Pinlet[idx]/TotalPressure * TotalFlow - F_sim['xf'][idx])
+                tor_dev = tor_d[ref_species]
+                xrc.append((tor_dev - tor0)/tor0/(-delG * 1000 /(_const.Rg * Tem)))
         # RESULT
         result = {}
         result['pressure'] = self.pressure_value
@@ -180,8 +201,7 @@ class CSTR(KineticModel):
         result['rate'] = self.rate_value
         result['energy'] = self.energy_value
         result['equil_rate'] = self.equil_rate_const_value
-
-        # TODO: degree of rate control
+        result['xrc'] = xrc
         return tor, result
     
     def condilist_fwd_simul(self, dE_start, conditionlist,
@@ -196,9 +216,9 @@ class CSTR(KineticModel):
             result_list.append(result)
         return tor_list, result_list
             
-    def evidence_construct(self, dE_start, conditionlist, evidence_info, sensitivity=True):
+    def evidence_construct(self, conditionlist, evidence_info, sensitivity=True):
         # simulation option
-        reltol = evidence_info.get('reltol', 1e-8)
+        reltol = evidence_info.get('reltol', 1e-12)
         fwdtol = evidence_info.get('fwdtol', 1e-4)
         adjtol = evidence_info.get('adjtol', 1e-4)
         # error value
@@ -215,7 +235,6 @@ class CSTR(KineticModel):
         else:
             opts = fwd_NoSensitivity_option(reltol=reltol)
         Fint = cas.Integrator('Fint', 'cvodes', self._dae_, opts)
-
         evidence = 0
         for condition in conditionlist:
             TotalPressure = condition.TotalPressure
@@ -266,11 +285,13 @@ class CSTR(KineticModel):
         if prior_info['type'] == 'Ridge':
             L2 = prior_info['L2']
             prior = cas.mul(Pnlp.T, Pnlp) * L2
-        elif prior_info['type'] == 'Gaussian':
+        elif prior_info['type'] == 'normal':
             mean = prior_info['mean']
             cov = prior_info['cov']
             dev = Pnlp - mean
             prior = cas.mul(cas.mul(dev.T, np.linalg.inv(cov)), dev)
+        elif prior_info['type'] == 'uniform':
+            prior = 1
         elif prior_info['type'] == 'GP':
             BEmean = prior_info['BEmean']
             BEcov = prior_info['BEcov']
@@ -294,7 +315,7 @@ class CSTR(KineticModel):
         if report is not None:
             import sys
             sys_out = sys.stdout
-            fp = open(report, 'a')
+            fp = open(report, 'w')
             sys.stdout = fp
         print('Evidence Info:')
         print(str(evidence_info))
@@ -350,12 +371,30 @@ class CSTR(KineticModel):
         
         return opt_sol, obj
 
+    def prob_function(self, conditionlist, evidence_info, prior_info):
+        Pnlp = self._Pnlp
+        # Objective
+        likeli = self.evidence_construct(conditionlist, evidence_info, sensitivity=False)
+        prior = self.prior_construct(prior_info)
+        self.prob_func = cas.MXFunction('prob_func', [Pnlp], [likeli, prior])
+        return cas.MXFunction('prob_func', [Pnlp], [likeli, prior])
 
+    def eval_prob(self, dE, conditionlist, evidence_info, prior_info):
+        if self.prob_func is None:
+            prob_func = self.prob_function(conditionlist, evidence_info, prior_info)
 
-    def bayesian_infer(self, ntot, nbuf, dE_start, transi_matrix, 
+        prob_func = self.prob_func
+        prob_func.setInput(dE, 'i0')
+        prob_func.evaluate()
+
+        log_likeli = -float(prob_func.getOutput('o0'))
+        log_prior = -float(prob_func.getOutput('o1'))
+        return log_likeli, log_prior
+
+    def bayesian_infer(self, ntot, nbuf, dE_start, transi_matrix,
                        conditionlist, evidence_info, prior_info,
                        sample_method='elementwise', constraint=True,
-                       step_write=100, save_result=True, report=None):
+                       step_write=100, save_result=True, save_step=10000, report=None):
         
         out = ''
         # Summary of Evidence and Prior
@@ -376,30 +415,28 @@ class CSTR(KineticModel):
 
         tic = time.clock()
         
-        Pnlp = self._Pnlp
-        # Objective
-        likeli = self.evidence_construct(dE_start, conditionlist, evidence_info, sensitivity=False)
-        prior = self.prior_construct(prior_info)
+        # Pnlp = self._Pnlp
+        # # Objective
+        # likeli = self.evidence_construct(conditionlist, evidence_info, sensitivity=False)
+        # prior = self.prior_construct(prior_info)
         
         if constraint:
             dE_start = self.CorrThermoConsis(dE_start)
-        prob_fxn = cas.MXFunction('prob_fxn', [Pnlp], [likeli, prior])
-        prob_fxn.setInput(dE_start, 'i0')
-        prob_fxn.evaluate()
-        
-        log_likeli_prev = -float(prob_fxn.getOutput('o0'))
-        log_prior_prev = -float(prob_fxn.getOutput('o1'))
+
+        prob_func = self.prob_function(conditionlist, evidence_info, prior_info)
+        log_likeli_prev, log_prior_prev = self.eval_prob(dE_start, conditionlist, evidence_info, prior_info)
         log_posterior_prev = log_likeli_prev + log_prior_prev
+
         #likeli_prev = np.exp(-float(prob_fxn.getOutput('o0')))
         #prior_prev = np.exp(-float(prob_fxn.getOutput('o1')))
         #posterior_prev = likeli_prev * prior_prev
-        
-        out += '{0:^10s}  {1:^15s}  {2:^15s}  {3:^15s}  {4:^15s}  {5:^15s}'.\
-              format('step', 'log(prior)', 'log(likelihood)', 'log(posterior)', 'accept%', 'infeasi%') + '\n'
-        out += '==' * 30 + '\n'
-        print('{0:^10s}  {1:^15s}  {2:^15s}  {3:^15s}  {4:^15s}  {5:15s}'.\
-              format('step', 'log(prior)', 'log(likelihood)', 'log(posterior)', 'accept%', 'infeasi%'))
-        print('==' * 30)
+
+        header = '{0:^10s}  {1:^15s}  {2:^15s}  {3:^15s}  {4:^15s}  {5:^15s}'. \
+                     format('step', 'log(prior)', 'log(likelihood)', 'log(posterior)', 'accept%', 'infeasi%') + '\n'
+        header += '==' * 30
+        out += header + '\n'
+        print(header)
+
         tor_dis, result_dis = [], []
         if save_result:
             tor_prev, result_prev = self.condilist_fwd_simul(dE_start, conditionlist)
@@ -410,12 +447,12 @@ class CSTR(KineticModel):
         jump, infeasi = 0, 0
         for i in range(ntot):
             if i % step_write == 0:
-                out += '{0:^10d}  {1:^15.2f}  {2:^15.2f}  {3:^15.2f}  {4:^15.2f}  {5:^15.2f}'.\
-                        format(i, log_prior_prev, log_likeli_prev, log_posterior_prev,
-                               jump/float(i+1)*100, infeasi/float(i+1)*100) + '\n'
-                print('{0:^10d}  {1:^15.2f}  {2:^15.2f}  {3:^15.2f}  {4:^15.2f} {5:^15.2f}'.\
-                        format(i, log_prior_prev, log_likeli_prev, log_posterior_prev,
-                               jump/float(i+1)*100, infeasi/float(i+1)*100))
+                output = '{0:^10d}  {1:^15.2f}  {2:^15.2f}  {3:^15.2f}  {4:^15.2f}  {5:^15.2f}'.\
+                             format(i, log_prior_prev, log_likeli_prev, log_posterior_prev,
+                                    jump/float(i+1)*100, infeasi/float(i+1)*100)
+                out += output + '\n'
+                print(output)
+            
             Estar = _sample(Eprev, transi_matrix, sample_method)
             
             # Define Constarint: True: Satisfy // False: not Satisfy
@@ -429,10 +466,7 @@ class CSTR(KineticModel):
             else:
                 try:
                     # Evaluate the posterior distribution
-                    prob_fxn.setInput(Estar, 'i0')
-                    prob_fxn.evaluate()
-                    log_likeli_star = -float(prob_fxn.getOutput('o0'))
-                    log_prior_star = -float(prob_fxn.getOutput('o1'))
+                    log_likeli_star, log_prior_star = self.eval_prob(Estar, conditionlist, evidence_info, prior_info)
                     log_posterior_star = log_likeli_star + log_prior_star
                     #likeli_star = np.exp(-float(prob_fxn.getOutput('o0')))
                     #prior_star = np.exp(-float(prob_fxn.getOutput('o1')))
@@ -468,6 +502,8 @@ class CSTR(KineticModel):
                 if save_result:
                     tor_dis.append(tor_prev)
                     result_dis.append(result_prev)
+                if i % save_step == 0:
+                    np.save('edis_breakpoint_%d.npy' %i, Edis)
         
         out += '==' * 30 + '\n'
         toc = time.clock()
@@ -476,6 +512,7 @@ class CSTR(KineticModel):
         if report is not None:
             with open(report, 'a') as fp:
                 fp.write(out)
+                fp.close()
         return Edis, tor_dis, result_dis
             
 def _sample(dE_start, transi_matrix, sample_method):
@@ -528,7 +565,7 @@ def fwd_sensitivity_option(tf=5000, reltol=1e-8,
     opts['stop_at_end'] = True
     return opts
 
-def fwd_NoSensitivity_option(tf=100000, reltol=1e-8, abs_rel=1e-2):
+def fwd_NoSensitivity_option(tf=1000000, reltol=1e-12, abs_rel=1e-2):
     '''
     Options pass to CVODES integration
     '''
