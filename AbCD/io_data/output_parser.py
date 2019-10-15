@@ -10,6 +10,7 @@ class Out_data(object):
         out = ''
         
         specieslist = network.specieslist
+        
         # Species Basic Info
         out += 'Species Basic ThermoInfo @ %.2f K \n' % Tem
         out += '{0:^6s} {1:^10s} {2:^10s} {3:^6s} {4:^10s} {5:^12s} {6:^12s} \n'\

@@ -83,7 +83,8 @@ class GasSpecies(Species):
         self.phase = 'gaseous'
 
     def __repr__(self):
-        return self.formula + '(g)'
+        #return self.formula + '(g)'
+        return self.name
 
     def unicode_repr(self):
         newformula = r''
@@ -103,7 +104,8 @@ class SurfaceSpecies(Species):
         self.bind_info = None            # occupied site geometry configuration and binding energy
 
     def __repr__(self):
-        return self.formula + self.denticity * '*'
+        #return self.formula + self.denticity * '*'
+        return self.name
 
     def unicode_repr(self):
         newformula = r''

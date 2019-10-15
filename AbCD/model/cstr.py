@@ -6,6 +6,7 @@ import casadi as cas
 from .network import KineticModel
 import time
 from AbCD.utils import Constant as _const
+from AbCD.utils import get_index_species, check_index, find_index
 
 class CSTRCondition(object):
     '''
@@ -114,8 +115,12 @@ class CSTR(KineticModel):
             x0 = [0] * (self.nspe - 1) + [1]
         else:
             # Construct Coverage
-            pass
-
+            x0 = [0] * (self.nspe - 1) + [1]
+            for spe, cov in condition.InitCoverage.items():
+                idx = get_index_species(spe, self.specieslist)
+                x0[idx-self.ngas] = cov
+                x0[-1] -= cov
+        print(x0)
         # Partial Pressure
         Pinlet = np.zeros(self.ngas)
         for idx, spe in enumerate(self.specieslist):
@@ -123,12 +128,12 @@ class CSTR(KineticModel):
                 Pinlet[idx] = condition.PartialPressure[str(spe)] if str(spe) in condition.PartialPressure.keys() else 0
         P_dae = np.hstack([dE_start, Pinlet, Tem, TotalFlow])
         F_sim = Fint(x0=x0, p=P_dae)
-
+        print(F_sim['xf'])
         tor = {}
         for idx, spe in enumerate(self.specieslist):
             if spe.phase == 'gaseous':
                 tor[str(spe)] = float(Pinlet[idx]/TotalPressure * TotalFlow - F_sim['xf'][idx])
-
+                print(spe, Pinlet)
 
         # Detailed Reaction network data
         # Evaluate partial pressure and surface coverage

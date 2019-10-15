@@ -19,7 +19,7 @@ def Enthalpy(thermo_data, temp=273.15):
             nasapoly['a5']*temp**4/5. + nasapoly['a6']/temp
         H *= _const.Rg * temp/1000
     elif thermo_data['type'] == 'standard':
-        H = thermo_data['Hf']
+        H = thermo_data['data']['Hf']
     return H
 
 def Entropy(thermo_data, temp=273.15):
@@ -39,7 +39,7 @@ def Entropy(thermo_data, temp=273.15):
             nasapoly['a5']*temp**4/4. + nasapoly['a7']
         S *= _const.Rg
     elif thermo_data['type'] == 'standard':
-        S = thermo_data['S']
+        S = thermo_data['data']['S']
     return S
 
 def HeatCapacity(thermo_data, temp=273.15):
