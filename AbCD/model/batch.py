@@ -4,6 +4,7 @@ import tempfile
 import numpy as np
 import casadi as cas
 from .network import KineticModel
+from scipy import stats
 from AbCD.utils import get_index_species
 
 
@@ -20,6 +21,13 @@ class BATCHcondition(object):
         self.InitRate = {}
     def _calGrid(self):
         self.TimeGrid = np.linspace(0, self.SimulationTime, self.Ntime)
+
+    def __repr__(self):
+        out = ''
+        out += 'Batch reactor condition: \n'
+        out += 'Name: %s\n' %self.name
+        out += 'Simulation time: %s s\n' %self.SimulationTime
+        return out
 
 class Batch(KineticModel):
     '''
@@ -92,4 +100,11 @@ class Batch(KineticModel):
         
         # Evalu
         out = Fsim.getOutput().full()
-        return out
+
+        tor_list = {}
+        for i, spe in enumerate(self.specieslist):
+            if spe.phase == 'gaseous':
+                nt = int(condition.Ntime/2)
+                slope, intercept, r_value, p_value, std_err = stats.linregress(condition.TimeGrid[nt:], out[i, nt:])
+                tor_list[spe.name] = slope
+        return out, tor_list

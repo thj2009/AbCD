@@ -211,7 +211,7 @@ class CSTR(KineticModel):
         result_list = []
         
         for condi in conditionlist:
-            tor, result = self.fwd_simulation(dE_start, condi, reltol=1e-10, abstol=1e-12)
+            tor, result = self.fwd_simulation(dE_start, condi, reltol=reltol, abstol=abstol)
             tor_list.append(tor)
             result_list.append(result)
         return tor_list, result_list
@@ -290,6 +290,11 @@ class CSTR(KineticModel):
             cov = prior_info['cov']
             dev = Pnlp - mean
             prior = cas.mul(cas.mul(dev.T, np.linalg.inv(cov)), dev)
+        elif prior_info['type'] == 'normal_std':
+            mean = prior_info['mean']
+            std = prior_info['std']
+            dev = Pnlp - mean
+            prior = cas.sum_square(dev) / (2 * std**2)
         elif prior_info['type'] == 'uniform':
             prior = 1
         elif prior_info['type'] == 'GP':
