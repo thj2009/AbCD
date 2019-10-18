@@ -10,6 +10,7 @@ class Out_data(object):
         out = ''
         
         specieslist = network.specieslist
+        
         # Species Basic Info
         out += 'Species Basic ThermoInfo @ %.2f K \n' % Tem
         out += '{0:^6s} {1:^10s} {2:^10s} {3:^6s} {4:^10s} {5:^12s} {6:^12s} \n'\
@@ -343,6 +344,29 @@ class Out_data(object):
         with open(pesname, 'w') as fp:
             json.dump(pes, fp, indent=4)
 
+def cstr_output(cstr, condition):
+
+    temp = condition.Temperature
+    # coverage
+    out = ''
+    out += '{0:^5s}  {1:^40s}  {2:^10s}\n'.format('idx', 'species', 'coverage')
+    out += '==' * 30 + '\n'
+    for i, spe in enumerate(cstr.specieslist):
+        if spe.phase == 'surface':
+            out += '{0:^5d}  {1:^40s}  {2:^10.3e}\n'.format(i-cstr.ngas, spe, cstr.coverage_value[i-cstr.ngas])
+    out += '\n\n'
+    out += '{0:^5s}  {1:^10s}  {2:^10s}  {3:^10s}  {4:^10s}\n'.format('idx', 'reaction', 'rfwd', 'rrev', 'rnet')
+    out += '==' * 30 + '\n'
+    for i, rxn in enumerate(cstr.reactionlist):
+        out += '{0:^5d}  {1:^10s}  {2:^10.2e}  {3:^10.2e}  {4:^10.2e}\n'.format(i, rxn.name, cstr.rate_value['rfor'][i], cstr.rate_value['rrev'][i], cstr.rate_value['rnet'][i])
+
+    out += '\n\n'
+    out += '{0:^5s}  {1:^10s}  {2:^10s}\n'.format('idx', 'reaction', 'DRX')
+    out += '==' * 30 + '\n'
+    for i, rxn in enumerate(cstr.reactionlist):
+        out += '{0:^5d}  {1:^10s}  {2:^10.2f}\n'.format(i, rxn.name, cstr.xrc[i])
+    out += '{0:^5s}  {1:^10s}  {2:^10.2f}\n'.format('--', 'sum', sum(cstr.xrc))
+    return out
 
 def assign_correction(network, dE):
     dEa_index = network.dEa_index
