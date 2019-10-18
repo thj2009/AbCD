@@ -56,7 +56,8 @@ class CSTR(KineticModel):
         self.rate_value = {}
         self.equil_rate_const_value = {}
         self.energy_value = {}
-
+        self.xrc = []
+        
         self._t = cas.SX.sym('t', 1)                # Time
         self._partP_in = cas.SX.sym('partP_in', self.ngas)
         self._Flowtot = cas.SX.sym('Flowtot', 1)
@@ -207,6 +208,8 @@ class CSTR(KineticModel):
         result['energy'] = self.energy_value
         result['equil_rate'] = self.equil_rate_const_value
         result['xrc'] = xrc
+        
+        self.xrc = xrc
         return tor, result
     
     def condilist_fwd_simul(self, dE_start, conditionlist,
