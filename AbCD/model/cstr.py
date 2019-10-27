@@ -338,7 +338,7 @@ class CSTR(KineticModel):
         print('--' * 20)
         Pnlp = self._Pnlp
         # Objective
-        obj = self.evidence_construct(dE_start, conditionlist, evidence_info) +\
+        obj = self.evidence_construct(conditionlist, evidence_info) +\
             self.prior_construct(prior_info)
         if constraint:
             nlp = dict(f=obj, x=Pnlp, g=self._thermo_constraint_expression)
