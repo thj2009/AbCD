@@ -121,7 +121,6 @@ class CSTR(KineticModel):
                 idx = get_index_species(spe, self.specieslist)
                 x0[idx-self.ngas] = cov
                 x0[-1] -= cov
-        print(x0)
         # Partial Pressure
         Pinlet = np.zeros(self.ngas)
         for idx, spe in enumerate(self.specieslist):
@@ -129,12 +128,10 @@ class CSTR(KineticModel):
                 Pinlet[idx] = condition.PartialPressure[str(spe)] if str(spe) in condition.PartialPressure.keys() else 0
         P_dae = np.hstack([dE_start, Pinlet, Tem, TotalFlow])
         F_sim = Fint(x0=x0, p=P_dae)
-        print(F_sim['xf'])
         tor = {}
         for idx, spe in enumerate(self.specieslist):
             if spe.phase == 'gaseous':
-                tor[str(spe)] = float(Pinlet[idx]/TotalPressure * TotalFlow - F_sim['xf'][idx])
-                print(spe, Pinlet)
+                tor[str(spe)] = float(F_sim['xf'][idx] - Pinlet[idx]/TotalPressure * TotalFlow)
 
         # Detailed Reaction network data
         # Evaluate partial pressure and surface coverage
@@ -186,20 +183,38 @@ class CSTR(KineticModel):
         # TODO: degree of rate control
         if DRX:
             delG = drc_opt.get('delG', 1)
-            ref_species = drc_opt.get('ref', 'CO(g)')
+            ref_species = drc_opt.get('ref', 'H2(g)')
+            numer = drc_opt.get('numer', 'fwd')
             tor0 = tor[ref_species]
+
             for idx, j in enumerate(self.dEa_index):
                 dP = np.copy(dE_start)
                 dP[idx] += delG
                 # Partial Pressure
                 P_dae = np.hstack([dP, Pinlet, Tem, TotalFlow])
                 F_sim = Fint(x0=x0, p=P_dae)
-                tor_d = {}
-                for idx, spe in enumerate(self.specieslist):
-                    if spe.phase == 'gaseous':
-                        tor_d[str(spe)] = float(Pinlet[idx]/TotalPressure * TotalFlow - F_sim['xf'][idx])
-                tor_dev = tor_d[ref_species]
-                xrc.append((tor_dev - tor0)/tor0/(-delG * 1000 /(_const.Rg * Tem)))
+
+                for ii, spe in enumerate(self.specieslist):
+                    if str(spe) == ref_species:
+                        tor_p = float(F_sim['xf'][ii] - Pinlet[ii]/TotalPressure * TotalFlow)
+                
+                if numer == 'cent':
+                    dP = np.copy(dE_start)
+                    dP[idx] -= delG
+                    # Partial Pressure
+                    P_dae = np.hstack([dP, Pinlet, Tem, TotalFlow])
+                    F_sim = Fint(x0=x0, p=P_dae)
+                    
+                    for ii, spe in enumerate(self.specieslist):
+                        if str(spe) == ref_species:
+                            tor_n = float(F_sim['xf'][ii] - Pinlet[ii]/TotalPressure * TotalFlow)
+            
+                if numer == 'fwd':
+                    #xrc.append((tor_p - tor0)/tor0/(-delG * 1000 /(_const.Rg * Tem)))
+                    xrc.append((np.log(np.abs(tor_p)) - np.log(np.abs(tor0)))/(-delG * 1000 /(_const.Rg * Tem)))
+                if numer == 'cent':
+                    #xrc.append((tor_p - tor_n)/tor0/(-2 * delG * 1000 /(_const.Rg * Tem)))
+                    xrc.append((np.log(np.abs(tor_p)) - np.log(np.abs(tor_n)))/(-2 * delG * 1000 /(_const.Rg * Tem)))
         # RESULT
         result = {}
         result['pressure'] = self.pressure_value
@@ -264,7 +279,7 @@ class CSTR(KineticModel):
             for idx, spe in enumerate(self.specieslist):
                 if spe.phase == 'gaseous':
                     # construct evidence with turnover frequency
-                    tor = Pinlet[idx]/TotalPressure * TotalFlow - F_sim['xf'][idx]
+                    tor = F_sim['xf'][idx] - Pinlet[idx]/TotalPressure * TotalFlow
                     if str(spe) in condition.TurnOverFrequency.keys():
                         exp_tor = condition.TurnOverFrequency[str(spe)]
                         if err_type == 'abs' or abs(exp_tor) <= lowSurf_thres:

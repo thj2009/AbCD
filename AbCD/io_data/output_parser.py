@@ -182,14 +182,16 @@ class Out_data(object):
         # CREATE BARLIST
         barList = []
         E0 = 0
-        for i, indices_dict in enumerate(barListIn):
+        for i, indices_list in enumerate(barListIn):
             E = 0
             name = []
             
-            for idx in indices_dict.keys():
-                stoi = indices_dict[idx]
+            for idx, stoi in indices_list:
                 spe = network.specieslist[idx]
-                E += stoi * spe.Enthalpy(Tem, corr=True)
+                if e_type == 'H':
+                    E += stoi * spe.Enthalpy(Tem, corr=True)
+                if e_type == 'E':
+                    E += stoi * spe.Energy(corr=True)
                 if not (neglect_h and str(spe) == 'H*'):
                     str_stoi = str(stoi) if stoi != 1 else ''
                     name.append(str_stoi + spe.unicode_repr())
@@ -198,7 +200,7 @@ class Out_data(object):
             E = E - E0
             name = '\n+'.join(name)
             barList.append({'E': E, 'name':name})
-        
+            
         connectorList = []
         for i, indices in enumerate(connListIn):
             name = []
@@ -257,10 +259,9 @@ class Out_data(object):
             # CREATE BARLIST
             barE, barList = [], []
             E0 = 0
-            for i, indices_dict in enumerate(barListIn):
+            for i, indices_list in enumerate(barListIn):
                 E = 0
-                for idx in indices_dict.keys():
-                    stoi = indices_dict[idx]
+                for idx, stoi in indices_list:
                     spe = network.specieslist[idx]
                     E += stoi * spe.Enthalpy(Tem, corr=True)
                 if i == 0 and shift:
@@ -296,11 +297,10 @@ class Out_data(object):
         # CREATE BARLIST
         barList = []
         E0 = 0
-        for i, indices_dict in enumerate(barListIn):
+        for i, indices_list in enumerate(barListIn):
             E = 0
             name = []
-            for idx in indices_dict.keys():
-                stoi = indices_dict[idx]
+            for idx, stoi in indices_list:
                 spe = network.specieslist[idx]
                 str_stoi = str(stoi) if stoi != 1 else ''
                 name.append(str_stoi + spe.name)

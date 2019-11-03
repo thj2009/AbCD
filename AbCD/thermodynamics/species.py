@@ -31,6 +31,7 @@ class Species(object):
                 element[ss] += stoi
         self._element = element
 
+    
     def Enthalpy(self, temp=273.15, corr=False):
         '''
         Calculate Enthapy or heat of formation at specific tempperature
@@ -42,6 +43,14 @@ class Species(object):
             if corr:
                 H += self.dE
         return H
+
+    def Energy(self):
+        E = 0
+        if bool(self.thermo['data']):
+            E = _cal.Energy(self.thermo)
+            if corr:
+                E += self.dE
+        return E
 
     def Entropy(self, temp=273.15):
         S = 0
