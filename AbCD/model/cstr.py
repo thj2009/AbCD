@@ -121,7 +121,6 @@ class CSTR(KineticModel):
                 idx = get_index_species(spe, self.specieslist)
                 x0[idx-self.ngas] = cov
                 x0[-1] -= cov
-        print(x0)
         # Partial Pressure
         Pinlet = np.zeros(self.ngas)
         for idx, spe in enumerate(self.specieslist):
@@ -129,12 +128,10 @@ class CSTR(KineticModel):
                 Pinlet[idx] = condition.PartialPressure[str(spe)] if str(spe) in condition.PartialPressure.keys() else 0
         P_dae = np.hstack([dE_start, Pinlet, Tem, TotalFlow])
         F_sim = Fint(x0=x0, p=P_dae)
-        print(F_sim['xf'])
         tor = {}
         for idx, spe in enumerate(self.specieslist):
             if spe.phase == 'gaseous':
-                tor[str(spe)] = float(Pinlet[idx]/TotalPressure * TotalFlow - F_sim['xf'][idx])
-                print(spe, Pinlet)
+                tor[str(spe)] = float(F_sim['xf'][idx] - Pinlet[idx]/TotalPressure * TotalFlow)
 
         # Detailed Reaction network data
         # Evaluate partial pressure and surface coverage
@@ -186,20 +183,38 @@ class CSTR(KineticModel):
         # TODO: degree of rate control
         if DRX:
             delG = drc_opt.get('delG', 1)
-            ref_species = drc_opt.get('ref', 'CO(g)')
+            ref_species = drc_opt.get('ref', 'H2(g)')
+            numer = drc_opt.get('numer', 'fwd')
             tor0 = tor[ref_species]
+
             for idx, j in enumerate(self.dEa_index):
                 dP = np.copy(dE_start)
                 dP[idx] += delG
                 # Partial Pressure
                 P_dae = np.hstack([dP, Pinlet, Tem, TotalFlow])
                 F_sim = Fint(x0=x0, p=P_dae)
-                tor_d = {}
-                for idx, spe in enumerate(self.specieslist):
-                    if spe.phase == 'gaseous':
-                        tor_d[str(spe)] = float(Pinlet[idx]/TotalPressure * TotalFlow - F_sim['xf'][idx])
-                tor_dev = tor_d[ref_species]
-                xrc.append((tor_dev - tor0)/tor0/(-delG * 1000 /(_const.Rg * Tem)))
+
+                for ii, spe in enumerate(self.specieslist):
+                    if str(spe) == ref_species:
+                        tor_p = float(F_sim['xf'][ii] - Pinlet[ii]/TotalPressure * TotalFlow)
+                
+                if numer == 'cent':
+                    dP = np.copy(dE_start)
+                    dP[idx] -= delG
+                    # Partial Pressure
+                    P_dae = np.hstack([dP, Pinlet, Tem, TotalFlow])
+                    F_sim = Fint(x0=x0, p=P_dae)
+                    
+                    for ii, spe in enumerate(self.specieslist):
+                        if str(spe) == ref_species:
+                            tor_n = float(F_sim['xf'][ii] - Pinlet[ii]/TotalPressure * TotalFlow)
+            
+                if numer == 'fwd':
+                    xrc.append((tor_p - tor0)/tor0/(-delG * 1000 /(_const.Rg * Tem)))
+                    #xrc.append((np.log(np.abs(tor_p)) - np.log(np.abs(tor0)))/(-delG * 1000 /(_const.Rg * Tem)))
+                if numer == 'cent':
+                    xrc.append((tor_p - tor_n)/tor0/(-2 * delG * 1000 /(_const.Rg * Tem)))
+                    #xrc.append((np.log(np.abs(tor_p)) - np.log(np.abs(tor_n)))/(-2 * delG * 1000 /(_const.Rg * Tem)))
         # RESULT
         result = {}
         result['pressure'] = self.pressure_value
@@ -239,9 +254,11 @@ class CSTR(KineticModel):
         # Initialize simulator
         Pnlp = self._Pnlp
         if sensitivity:
-            opts = fwd_sensitivity_option(reltol=reltol, adjtol=adjtol, fwdtol=fwdtol)
+            # opts = fwd_sensitivity_option(reltol=reltol, adjtol=adjtol, fwdtol=fwdtol)
+            opts = fwd_sensitivity_option()
         else:
             opts = fwd_NoSensitivity_option(reltol=reltol)
+        print(opts)
         Fint = cas.Integrator('Fint', 'cvodes', self._dae_, opts)
         evidence = 0
         for condition in conditionlist:
@@ -264,27 +281,27 @@ class CSTR(KineticModel):
             for idx, spe in enumerate(self.specieslist):
                 if spe.phase == 'gaseous':
                     # construct evidence with turnover frequency
-                    tor = Pinlet[idx]/TotalPressure * TotalFlow - F_sim['xf'][idx]
+                    tor = F_sim['xf'][idx] - Pinlet[idx] / TotalPressure * TotalFlow
                     if str(spe) in condition.TurnOverFrequency.keys():
                         exp_tor = condition.TurnOverFrequency[str(spe)]
                         if err_type == 'abs' or abs(exp_tor) <= lowSurf_thres:
                             dev = tor -  exp_tor
                         elif err_type == 'rel':
-                            dev = 1 - tor/(exp_tor)
+                            dev = 1 - tor / exp_tor
                         elif err_type == 'log':
-                            dev = cas.log(tor/exp_tor)
+                            dev = cas.log(tor / exp_tor)
                         else:
                             pass
-                        if abs(exp_tor) <= lowSurf_thres:
-                            evidence += (dev * dev) * lowSurf
-                        else:
-                            evidence += (dev * dev)/err**2
-                if spe.phase == 'surface':
-                    cov = F_sim['xf'][idx]
-                    if str(spe) in condition.Coverage.keys():
-                        exp_cov = condition.Coverage[str(spe)]
-                        dev = cas.log(cov/exp_cov)
-                        evidence += (dev * dev)/cov_err**2
+                        # if abs(exp_tor) <= lowSurf_thres:
+                            # evidence += (dev * dev) * lowSurf
+                        # else:
+                        evidence += (dev * dev) / err**2
+                # if spe.phase == 'surface':
+                    # cov = F_sim['xf'][idx]
+                    # if str(spe) in condition.Coverage.keys():
+                        # exp_cov = condition.Coverage[str(spe)]
+                        # dev = cas.log(cov / exp_cov)
+                        # evidence += (dev * dev) / cov_err**2
         self._evidence_ = evidence
         return evidence
 
@@ -304,7 +321,7 @@ class CSTR(KineticModel):
             dev = Pnlp - mean
             prior = cas.sum_square(dev) / (2 * std**2)
         elif prior_info['type'] == 'uniform':
-            prior = 1
+            prior = 0
         elif prior_info['type'] == 'GP':
             BEmean = prior_info['BEmean']
             BEcov = prior_info['BEcov']
@@ -322,7 +339,7 @@ class CSTR(KineticModel):
         return prior
 
     def mle_estimation(self, dE_start, conditionlist, evidence_info, prior_info,
-                       res_rsample=False, constraint=True,
+                       constraint=True,
                        nlptol=1e-2, maxiter=500, bfgs=True, print_level=5,
                        print_screen=False, report=None):
         if report is not None:
@@ -338,8 +355,9 @@ class CSTR(KineticModel):
         print('--' * 20)
         Pnlp = self._Pnlp
         # Objective
-        obj = self.evidence_construct(dE_start, conditionlist, evidence_info) +\
+        obj = self.evidence_construct(conditionlist, evidence_info) + \
             self.prior_construct(prior_info)
+        print(obj)
         if constraint:
             nlp = dict(f=obj, x=Pnlp, g=self._thermo_constraint_expression)
         else:
@@ -541,44 +559,86 @@ def _sample(dE_start, transi_matrix, sample_method):
     newE = np.array(dE_start) + np.array(deltaE)
     return list(newE)
 
-def fwd_sensitivity_option(tf=5000, reltol=1e-8,
-                           fwdtol=1e-4, adjtol=1e-4, abs_rel=1e-2):
+# def fwd_sensitivity_option(tf=5000, reltol=1e-8,
+                           # fwdtol=1e-4, adjtol=1e-4, abs_rel=1e-2):
+    # '''
+    # Options pass to CVODES for sensitivity analysis
+    # '''
+    # opts = {}
+    # opts['tf'] = tf
+
+    # opts['fsens_all_at_once'] = True
+    # opts['fsens_err_con'] = True
+    # opts['fsens_abstol'] = fwdtol * abs_rel
+    # opts['fsens_reltol'] = fwdtol
+    # opts['abstol'] = reltol * abs_rel
+    # opts['reltol'] = reltol
+    # opts['abstolB'] = adjtol * abs_rel
+    # opts['reltolB'] = adjtol
+
+    # opts['fsens_abstol'] = 1e-6
+    # opts['fsens_reltol'] = 1e-4
+    # opts['abstol'] = 1e-8
+    # opts['reltol'] = 1e-6
+    # opts['abstolB'] = 1e-6
+    # opts['reltolB'] = 1e-4
+    
+    
+    # opts['linear_multistep_method'] = 'bdf'
+    # opts['max_multistep_order'] = 5
+    # opts['use_preconditioner'] = True
+    # opts['use_preconditionerB'] = True
+    # opts['pretype'] = 'both'
+    # opts['pretypeB'] = 'both'
+    # opts['steps_per_checkpoint'] = 1000
+    # opts['disable_internal_warnings'] = True
+    # opts['max_num_steps'] = 10000
+    # opts['stop_at_end'] = True
+    # return opts
+
+
+def fwd_sensitivity_option(tf=5000, abstol=1e-8, reltol=1e-6):
     '''
     Options pass to CVODES for sensitivity analysis
     '''
     opts = {}
     opts['tf'] = tf
-
+    # opts["linear_solver"] = "csparse"
+    #opts["linear_solver_type"] = "user_defined"
+    #opts['t0'] = 0
+    #opts['print_stats'] = True
     opts['fsens_all_at_once'] = True
     opts['fsens_err_con'] = True
-    opts['fsens_abstol'] = fwdtol * abs_rel
-    opts['fsens_reltol'] = fwdtol
-    opts['abstol'] = reltol * abs_rel
+    opts['fsens_abstol'] = 1e-6
+    opts['fsens_reltol'] = 1e-5
+    opts['abstol'] = abstol
     opts['reltol'] = reltol
-    opts['abstolB'] = adjtol * abs_rel
-    opts['reltolB'] = adjtol
-
-    # opts['fsens_abstol'] = 1e-6
-    # opts['fsens_reltol'] = 1e-5
-    # opts['abstol'] = 1e-10
-    # opts['reltol'] = 1e-8
-    # opts['abstolB'] = 1e-6
-    # opts['reltolB'] = 1e-4
-    
-    
+    opts['abstolB'] = 1e-6
+    opts['reltolB'] = 1e-5
+    #opts['ad_weight'] = 0
+#    opts['ad_weight_sp'] = 1
     opts['linear_multistep_method'] = 'bdf'
+#    opts['exact_jacobian'] = False
+#    opts['linear_solverB'] = 'lapacklu'
+    #opts['linear_solver_typeB'] = 'dense'
+#    opts['iterative_solverB'] = 'gmres'
+    #opts['interpolation_type'] ='polynomial'
     opts['max_multistep_order'] = 5
     opts['use_preconditioner'] = True
     opts['use_preconditionerB'] = True
     opts['pretype'] = 'both'
     opts['pretypeB'] = 'both'
-    opts['steps_per_checkpoint'] = 1000
+    opts['steps_per_checkpoint'] = 1e3
+    #opts['nonlinear_solver_iteration'] = 'functional'
+    #opts['linear_solver_typeB'] = 'iterative' 
     opts['disable_internal_warnings'] = True
-    opts['max_num_steps'] = 1000
+    #opts['sensitivity_method'] = 'staggered'
+    opts['max_num_steps'] = 1e5
     opts['stop_at_end'] = True
     return opts
 
-def fwd_NoSensitivity_option(tf=1000000, reltol=1e-12, abs_rel=1e-2):
+
+def fwd_NoSensitivity_option(tf=1000000, reltol=1e-8, abs_rel=1e-2):
     '''
     Options pass to CVODES integration
     '''

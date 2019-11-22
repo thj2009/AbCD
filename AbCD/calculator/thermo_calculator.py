@@ -42,6 +42,13 @@ def Entropy(thermo_data, temp=273.15):
         S = thermo_data['data']['S']
     return S
 
+
+def Energy(thermo_data):
+    E = 0
+    if thermo_data['type'] == 'Shomate':
+        E = thermo_data['data']["F"]
+    return E
+
 def HeatCapacity(thermo_data, temp=273.15):
     '''
     Calculate heat capacity given temperature and thermodynamic parameter
