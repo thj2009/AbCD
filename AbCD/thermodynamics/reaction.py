@@ -59,6 +59,19 @@ class Reaction(object):
             Arr['Ea'] = H_TS - H_R
             Arr['n'] = 1
         return Arr
+    
+    def Cal_Ea_Ear(self, temp=273.15):
+        Ea = self.Arrhenius(temp)['Ea']
+        H = self.dH_Enthalpy(temp)
+        Ear = Ea - H
+        return Ea, Ear
+    
+    def Cal_A_Ar(self, temp=273.15):
+        A = self.Arrhenius(temp)['A']
+        n = self.Arrhenius(temp)['n']
+        S = self.dS_Entropy(temp)
+        Ar = A * np.exp(-S / _const.Rg)
+        return A, Ar
 
     def TS_Enthalpy(self, temp=273.15, corr=False):
         if self.kinetic['type'] == 'Arr':

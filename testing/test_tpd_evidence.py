@@ -3,8 +3,8 @@
 from AbCD.model import VacuumTPD
 from AbCD.io_data import In_data
 from AbCD.visual import tpd_profile
-sitelist, specieslist, reactionlist = In_data.load_mkm('./TPDdata/')
-conditionlist = In_data.load_condition('./TPDdata/')
+sitelist, specieslist, reactionlist = In_data.load_mkm('./testing/TPDdata/')
+conditionlist = In_data.load_condition('./testing/TPDdata/')
 
 dEa_index = []
 dBE_index = [1]

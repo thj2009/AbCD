@@ -6,12 +6,17 @@ def Enthalpy(thermo_data, temp=273.15):
     Calculate enthalpy given temperature and thermodynamic parameter
     '''
     H = 0
-    if thermo_data['type'] == 'Shomate':
+    if thermo_data['type'] in ['Shomate', 'shomate']:
         tt = temp/1000.
         shomate = thermo_data['data']
-        H = shomate['A']*tt + shomate['B']*tt**2/2. + shomate['C']*tt**3/3. + \
-            shomate['D']*tt**4/4. - shomate['E']/tt + shomate['F'] - \
-            shomate['H'] + shomate['dH']
+        if 'H' in shomate.keys():
+            H = shomate['A']*tt + shomate['B']*tt**2/2. + shomate['C']*tt**3/3. + \
+                shomate['D']*tt**4/4. - shomate['E']/tt + shomate['F'] - \
+                shomate['H'] + shomate['dH']
+        else:
+            H = shomate['A']*tt + shomate['B']*tt**2/2. + shomate['C']*tt**3/3. + \
+                shomate['D']*tt**4/4. - shomate['E']/tt + shomate['F']
+        
     elif thermo_data['type'] == 'NASApoly':
         nasapoly = thermo_data['data']
         H = nasapoly['a1'] + nasapoly['a2']*temp/2. + \
@@ -27,7 +32,7 @@ def Entropy(thermo_data, temp=273.15):
     Calculate entropy given temperature and thermodynamic parameter
     '''
     S = 0
-    if thermo_data['type'] == 'Shomate':
+    if thermo_data['type'] in ['Shomate', 'shomate']:
         shomate = thermo_data['data']
         tt = temp/1000.
         S = shomate['A']*np.log(tt) + shomate['B']*tt + shomate['C']*tt**2/2 + \

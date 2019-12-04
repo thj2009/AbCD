@@ -269,6 +269,11 @@ class SimpleKinetic(ReactionNet):
             sys.stdout = old_stdout
         return(dE_corr)
 
+    @property
+    def Pnlp(self):
+        return self._Pnlp
+
+
 class KineticModel(SimpleKinetic):
     '''
     core kinetic model for forward simulation and parameter estimation

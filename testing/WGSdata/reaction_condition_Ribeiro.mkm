@@ -1,0 +1,416 @@
+[
+    {
+        "type": "CSTR", 
+        "name": "Koryabkina_Act_1", 
+        "Temperature": 483.15, 
+        "TotalPressure": 0.7639999999999999, 
+        "TotalFlow": 1000000.0, 
+        "TotalSite": 1.0, 
+        "SimulationTime": 1000000.0, 
+        "PartialPressure": {
+            "CO2(g)": 0.093, 
+            "H2(g)": 0.381, 
+            "H2O(g)": 0.213, 
+            "CO(g)": 0.077
+        }, 
+        "TurnOverFrequency": {
+            "CO(g)": 0.027587558707071157
+        }
+    }, 
+    {
+        "type": "CSTR", 
+        "name": "Koryabkina_Act_2", 
+        "Temperature": 473.15, 
+        "TotalPressure": 0.7639999999999999, 
+        "TotalFlow": 1000000.0, 
+        "TotalSite": 1.0, 
+        "SimulationTime": 1000000.0, 
+        "PartialPressure": {
+            "CO2(g)": 0.093, 
+            "H2(g)": 0.381, 
+            "H2O(g)": 0.213, 
+            "CO(g)": 0.077
+        }, 
+        "TurnOverFrequency": {
+            "CO(g)": 0.018205
+        }
+    }, 
+    {
+        "type": "CSTR", 
+        "name": "Koryabkina_Act_3", 
+        "Temperature": 463.15, 
+        "TotalPressure": 0.7639999999999999, 
+        "TotalFlow": 1000000.0, 
+        "TotalSite": 1.0, 
+        "SimulationTime": 1000000.0, 
+        "PartialPressure": {
+            "CO2(g)": 0.093, 
+            "H2(g)": 0.381, 
+            "H2O(g)": 0.213, 
+            "CO(g)": 0.077
+        }, 
+        "TurnOverFrequency": {
+            "CO(g)": 0.0118
+        }
+    }, 
+    {
+        "type": "CSTR", 
+        "name": "Koryabkina_Act_4", 
+        "Temperature": 453.15, 
+        "TotalPressure": 0.7639999999999999, 
+        "TotalFlow": 1000000.0, 
+        "TotalSite": 1.0, 
+        "SimulationTime": 1000000.0, 
+        "PartialPressure": {
+            "CO2(g)": 0.093, 
+            "H2(g)": 0.381, 
+            "H2O(g)": 0.213, 
+            "CO(g)": 0.077
+        }, 
+        "TurnOverFrequency": {
+            "CO(g)": 0.007503389008080855
+        }
+    }, 
+    {
+        "type": "CSTR", 
+        "name": "Koryabkina_CO_1", 
+        "Temperature": 463.15, 
+        "TotalPressure": 0.722, 
+        "TotalFlow": 1000000.0, 
+        "TotalSite": 1.0, 
+        "SimulationTime": 1000000.0, 
+        "PartialPressure": {
+            "CO2(g)": 0.09, 
+            "H2(g)": 0.378, 
+            "H2O(g)": 0.216, 
+            "CO(g)": 0.038
+        }, 
+        "TurnOverFrequency": {
+            "CO(g)": 0.0073
+        }
+    }, 
+    {
+        "type": "CSTR", 
+        "name": "Koryabkina_CO_2", 
+        "Temperature": 463.15, 
+        "TotalPressure": 0.742, 
+        "TotalFlow": 1000000.0, 
+        "TotalSite": 1.0, 
+        "SimulationTime": 1000000.0, 
+        "PartialPressure": {
+            "CO2(g)": 0.091, 
+            "H2(g)": 0.379, 
+            "H2O(g)": 0.214, 
+            "CO(g)": 0.058
+        }, 
+        "TurnOverFrequency": {
+            "CO(g)": 0.0092
+        }
+    }, 
+    {
+        "type": "CSTR", 
+        "name": "Koryabkina_CO_3", 
+        "Temperature": 463.15, 
+        "TotalPressure": 0.7469999999999999, 
+        "TotalFlow": 1000000.0, 
+        "TotalSite": 1.0, 
+        "SimulationTime": 1000000.0, 
+        "PartialPressure": {
+            "CO2(g)": 0.092, 
+            "H2(g)": 0.38, 
+            "H2O(g)": 0.214, 
+            "CO(g)": 0.061
+        }, 
+        "TurnOverFrequency": {
+            "CO(g)": 0.0103
+        }
+    }, 
+    {
+        "type": "CSTR", 
+        "name": "Koryabkina_CO_4", 
+        "Temperature": 463.15, 
+        "TotalPressure": 0.7639999999999999, 
+        "TotalFlow": 1000000.0, 
+        "TotalSite": 1.0, 
+        "SimulationTime": 1000000.0, 
+        "PartialPressure": {
+            "CO2(g)": 0.093, 
+            "H2(g)": 0.381, 
+            "H2O(g)": 0.213, 
+            "CO(g)": 0.077
+        }, 
+        "TurnOverFrequency": {
+            "CO(g)": 0.0118
+        }
+    }, 
+    {
+        "type": "CSTR", 
+        "name": "Koryabkina_CO_5", 
+        "Temperature": 463.15, 
+        "TotalPressure": 0.8049999999999999, 
+        "TotalFlow": 1000000.0, 
+        "TotalSite": 1.0, 
+        "SimulationTime": 1000000.0, 
+        "PartialPressure": {
+            "CO2(g)": 0.095, 
+            "H2(g)": 0.383, 
+            "H2O(g)": 0.21, 
+            "CO(g)": 0.117
+        }, 
+        "TurnOverFrequency": {
+            "CO(g)": 0.0154
+        }
+    }, 
+    {
+        "type": "CSTR", 
+        "name": "Koryabkina_CO_6", 
+        "Temperature": 463.15, 
+        "TotalPressure": 0.891, 
+        "TotalFlow": 1000000.0, 
+        "TotalSite": 1.0, 
+        "SimulationTime": 1000000.0, 
+        "PartialPressure": {
+            "CO2(g)": 0.1, 
+            "H2(g)": 0.388, 
+            "H2O(g)": 0.206, 
+            "CO(g)": 0.197
+        }, 
+        "TurnOverFrequency": {
+            "CO(g)": 0.0226
+        }
+    }, 
+    {
+        "type": "CSTR", 
+        "name": "Koryabkina_CO2_1", 
+        "Temperature": 463.15, 
+        "TotalPressure": 0.7110000000000001, 
+        "TotalFlow": 1000000.0, 
+        "TotalSite": 1.0, 
+        "SimulationTime": 1000000.0, 
+        "PartialPressure": {
+            "CO2(g)": 0.07, 
+            "H2(g)": 0.366, 
+            "H2O(g)": 0.214, 
+            "CO(g)": 0.061
+        }, 
+        "TurnOverFrequency": {
+            "CO(g)": 0.0103
+        }
+    }, 
+    {
+        "type": "CSTR", 
+        "name": "Koryabkina_CO2_2", 
+        "Temperature": 463.15, 
+        "TotalPressure": 0.758, 
+        "TotalFlow": 1000000.0, 
+        "TotalSite": 1.0, 
+        "SimulationTime": 1000000.0, 
+        "PartialPressure": {
+            "CO2(g)": 0.111, 
+            "H2(g)": 0.368, 
+            "H2O(g)": 0.216, 
+            "CO(g)": 0.063
+        }, 
+        "TurnOverFrequency": {
+            "CO(g)": 0.0074
+        }
+    }, 
+    {
+        "type": "CSTR", 
+        "name": "Koryabkina_CO2_3", 
+        "Temperature": 463.15, 
+        "TotalPressure": 0.78, 
+        "TotalFlow": 1000000.0, 
+        "TotalSite": 1.0, 
+        "SimulationTime": 1000000.0, 
+        "PartialPressure": {
+            "CO2(g)": 0.131, 
+            "H2(g)": 0.369, 
+            "H2O(g)": 0.216, 
+            "CO(g)": 0.064
+        }, 
+        "TurnOverFrequency": {
+            "CO(g)": 0.0059
+        }
+    }, 
+    {
+        "type": "CSTR", 
+        "name": "Koryabkina_CO2_4", 
+        "Temperature": 463.15, 
+        "TotalPressure": 0.825, 
+        "TotalFlow": 1000000.0, 
+        "TotalSite": 1.0, 
+        "SimulationTime": 1000000.0, 
+        "PartialPressure": {
+            "CO2(g)": 0.173, 
+            "H2(g)": 0.37, 
+            "H2O(g)": 0.217, 
+            "CO(g)": 0.065
+        }, 
+        "TurnOverFrequency": {
+            "CO(g)": 0.0049
+        }
+    }, 
+    {
+        "type": "CSTR", 
+        "name": "Koryabkina_H2_1", 
+        "Temperature": 463.15, 
+        "TotalPressure": 0.567, 
+        "TotalFlow": 1000000.0, 
+        "TotalSite": 1.0, 
+        "SimulationTime": 1000000.0, 
+        "PartialPressure": {
+            "CO2(g)": 0.094, 
+            "H2(g)": 0.203, 
+            "H2O(g)": 0.211, 
+            "CO(g)": 0.059
+        }, 
+        "TurnOverFrequency": {
+            "CO(g)": 0.013600000000000001
+        }
+    }, 
+    {
+        "type": "CSTR", 
+        "name": "Koryabkina_H2_2", 
+        "Temperature": 463.15, 
+        "TotalPressure": 0.6559999999999999, 
+        "TotalFlow": 1000000.0, 
+        "TotalSite": 1.0, 
+        "SimulationTime": 1000000.0, 
+        "PartialPressure": {
+            "CO2(g)": 0.091, 
+            "H2(g)": 0.29, 
+            "H2O(g)": 0.214, 
+            "CO(g)": 0.061
+        }, 
+        "TurnOverFrequency": {
+            "CO(g)": 0.0102
+        }
+    }, 
+    {
+        "type": "CSTR", 
+        "name": "Koryabkina_H2_3", 
+        "Temperature": 463.15, 
+        "TotalPressure": 0.7, 
+        "TotalFlow": 1000000.0, 
+        "TotalSite": 1.0, 
+        "SimulationTime": 1000000.0, 
+        "PartialPressure": {
+            "CO2(g)": 0.091, 
+            "H2(g)": 0.333, 
+            "H2O(g)": 0.214, 
+            "CO(g)": 0.062
+        }, 
+        "TurnOverFrequency": {
+            "CO(g)": 0.0089
+        }
+    }, 
+    {
+        "type": "CSTR", 
+        "name": "Koryabkina_H2_4", 
+        "Temperature": 463.15, 
+        "TotalPressure": 0.8719999999999999, 
+        "TotalFlow": 1000000.0, 
+        "TotalSite": 1.0, 
+        "SimulationTime": 1000000.0, 
+        "PartialPressure": {
+            "CO2(g)": 0.089, 
+            "H2(g)": 0.504, 
+            "H2O(g)": 0.216, 
+            "CO(g)": 0.063
+        }, 
+        "TurnOverFrequency": {
+            "CO(g)": 0.0067
+        }
+    }, 
+    {
+        "type": "CSTR", 
+        "name": "Koryabkina_H2O_1", 
+        "Temperature": 463.15, 
+        "TotalPressure": 0.603, 
+        "TotalFlow": 1000000.0, 
+        "TotalSite": 1.0, 
+        "SimulationTime": 1000000.0, 
+        "PartialPressure": {
+            "CO2(g)": 0.089, 
+            "H2(g)": 0.369, 
+            "H2O(g)": 0.081, 
+            "CO(g)": 0.064
+        }, 
+        "TurnOverFrequency": {
+            "CO(g)": 0.0060999999999999995
+        }
+    }, 
+    {
+        "type": "CSTR", 
+        "name": "Koryabkina_H2O_2", 
+        "Temperature": 463.15, 
+        "TotalPressure": 0.643, 
+        "TotalFlow": 1000000.0, 
+        "TotalSite": 1.0, 
+        "SimulationTime": 1000000.0, 
+        "PartialPressure": {
+            "CO2(g)": 0.09, 
+            "H2(g)": 0.368, 
+            "H2O(g)": 0.122, 
+            "CO(g)": 0.063
+        }, 
+        "TurnOverFrequency": {
+            "CO(g)": 0.0078000000000000005
+        }
+    }, 
+    {
+        "type": "CSTR", 
+        "name": "Koryabkina_H2O_3", 
+        "Temperature": 463.15, 
+        "TotalPressure": 0.6890000000000001, 
+        "TotalFlow": 1000000.0, 
+        "TotalSite": 1.0, 
+        "SimulationTime": 1000000.0, 
+        "PartialPressure": {
+            "CO2(g)": 0.091, 
+            "H2(g)": 0.366, 
+            "H2O(g)": 0.171, 
+            "CO(g)": 0.061
+        }, 
+        "TurnOverFrequency": {
+            "CO(g)": 0.0101
+        }
+    }, 
+    {
+        "type": "CSTR", 
+        "name": "Koryabkina_H2O_4", 
+        "Temperature": 463.15, 
+        "TotalPressure": 0.7789999999999999, 
+        "TotalFlow": 1000000.0, 
+        "TotalSite": 1.0, 
+        "SimulationTime": 1000000.0, 
+        "PartialPressure": {
+            "CO2(g)": 0.094, 
+            "H2(g)": 0.364, 
+            "H2O(g)": 0.262, 
+            "CO(g)": 0.059
+        }, 
+        "TurnOverFrequency": {
+            "CO(g)": 0.0134
+        }
+    }, 
+    {
+        "type": "CSTR", 
+        "name": "Koryabkina_H2O_5", 
+        "Temperature": 463.15, 
+        "TotalPressure": 0.894, 
+        "TotalFlow": 1000000.0, 
+        "TotalSite": 1.0, 
+        "SimulationTime": 1000000.0, 
+        "PartialPressure": {
+            "CO2(g)": 0.096, 
+            "H2(g)": 0.362, 
+            "H2O(g)": 0.379, 
+            "CO(g)": 0.057
+        }, 
+        "TurnOverFrequency": {
+            "CO(g)": 0.017
+        }
+    }
+]

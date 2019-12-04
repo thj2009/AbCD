@@ -1,0 +1,20 @@
+[
+    {
+        "type": "CSTR", 
+        "name": "newTest", 
+        "Temperature": 350.574288, 
+        "TotalPressure": 1, 
+        "TotalFlow": 1000.0, 
+        "TotalSite": 1.0, 
+        "SimulationTime": 1000000.0, 
+        "PartialPressure": {
+            "CO2(g)": 0.5, 
+            "H2(g)": 0.5, 
+            "H2O(g)": 0.0, 
+            "CO(g)": 0.0
+        }, 
+        "Coverage": {
+            "HCOO*": 0.25
+        }
+    }
+]
