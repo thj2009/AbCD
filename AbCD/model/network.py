@@ -3,6 +3,7 @@ import sys
 import tempfile
 import numpy as np
 import casadi as cas
+from copy import copy
 
 from AbCD.utils import get_index_species, check_index, find_index
 from AbCD.utils import Constant as _const
@@ -105,73 +106,115 @@ class SimpleKinetic(ReactionNet):
             Tem = constTem
         else:
             Tem = self._Tem
-        enthal_spe, enthal_spe_cons = [], []
-        entro_spe = []
+        enthal_spe, entro_spe = [], []
         denthal = []    # Store the enthalpy of each species for function calculation
+        
+        # create species name list for replacing
+        old, new = [], []
+        for j, spe in enumerate(self.specieslist):
+            if spe.name != '*':
+                old.append(spe.name)
+                new.append('self._cover[%d]'%(j - self.ngas))
+        #print(old, new)
         for j, spe in enumerate(self.specieslist):
             HH = spe.Enthalpy(Tem)
+            if spe.cov_dependent != '':
+                expr = copy(spe.cov_dependent)
+                for old_spe, new_spe in zip(old, new):
+                    expr = expr.replace(old_spe, new_spe)
+                expr = expr.replace('exp', 'cas.exp')
+                expr = expr.replace('log', 'cas.log')
+                HH += eval(expr) * 96.485   # ev to kJ'
+            #print(spe, HH)
             SS = spe.Entropy(Tem)
             enthal_spe.append(HH)
-            enthal_spe_cons.append(spe.Enthalpy(thermoTem))
             entro_spe.append(SS)
             denthal.append(0)
         # surface species add deviation variable
         for j, dbe_idx in enumerate(self.dBE_index):
             enthal_spe[dbe_idx] += self._dBE[j]
-            enthal_spe_cons[dbe_idx] += self._Pnlp[self._NEa + j]
             denthal[dbe_idx] += self._Pnlp[self._NEa + j]
 
         kf = cas.SX.sym('kf', self.nrxn)
         kr = cas.SX.sym('kr', self.nrxn)
         Keq = cas.SX.sym('Keq', self.nrxn)
         enthal_react, entro_react, Ea_react = [], [], []
-        enthal_react_cons, Ea_cons = [], []          # Store the Enthalpy of each reaction
         denthal_react = []
         for i, rxn in enumerate(self.reactionlist):
-            kine_data = rxn.Arrhenius(Tem)
             Hreact, dHreact = 0, 0
             Sreact = 0
-            Hreact_cons = 0
-            Arr = kine_data['A']
-            Ea0 = kine_data['Ea']
-            Ea298 = rxn.Arrhenius(thermoTem)['Ea']
-            n = kine_data['n']
+            for j in range(self.nspe):
+                Hreact += self.stoimat[i][j] * enthal_spe[j]
+                dHreact += self.stoimat[i][j] * denthal[j]
+                Sreact += self.stoimat[i][j] * entro_spe[j]
+            enthal_react.append(Hreact)
+            denthal_react.append(dHreact)
+            entro_react.append(Sreact)
+            
+            #print(rxn.kinetic)
+            #print('*************')
+            if rxn.kinetic["type"] == 'BEP':
+                Ea = rxn.kinetic["data"]["alpha"] * Hreact + rxn.kinetic["data"]["beta"]
+                Arr = _const.kb / _const.h
+                n = 1
+                Ea0 = Ea
+                #Ea298 = Ea
+            else:
+                kine_data = rxn.Arrhenius(Tem)
+                Arr = kine_data['A']
+                Ea = kine_data['Ea']
+                Ea0 = kine_data['Ea']
+                n = kine_data['n']
+            
+            # get thermodynamic constraint
             if check_index(i, self.dEa_index):
                 ind = find_index(i, self.dEa_index)
                 Ea = Ea0 + self._dEa[ind]
-                Ea_cons.append(Ea298 + self._Pnlp[ind])
             else:
                 Ea = Ea0
-                Ea_cons.append(Ea298)
             Ea_react.append(Ea)
 
             kf[i] = Arr * (self._Tem**n) * \
                 cas.exp(-Ea * 1000 / (_const.Rg * self._Tem))  # k = A * T^n * exp(-Ea/(RT))
-            for j in range(self.nspe):
-                Hreact += self.stoimat[i][j] * enthal_spe[j]
-                dHreact += self.stoimat[i][j] * denthal[j]
-                Hreact_cons += self.stoimat[i][j] * enthal_spe_cons[j]
-                Sreact += self.stoimat[i][j] * entro_spe[j]
-
-            enthal_react.append(Hreact)
-            denthal_react.append(dHreact)
-            enthal_react_cons.append(Hreact_cons)
-            entro_react.append(Sreact)
 
             Keq[i] = cas.exp(-Hreact * 1000 / (_const.Rg * self._Tem)) * \
                     cas.exp(Sreact / _const.Rg)
             kr[i] = kf[i]/Keq[i]
 
         # Constraint function on parameter
-        ineq2 = cas.vertcat(Ea_cons) - cas.vertcat(enthal_react_cons)
-        thermal_consis_ineq = cas.vertcat([cas.vertcat(Ea_cons), ineq2])
-        self._thermo_constraint_expression = thermal_consis_ineq
         self._reaction_energy_expression = \
             {'enthalpy': cas.vertcat(enthal_react), 'activation': cas.vertcat(Ea_react)}
         self._kf = kf
         self._kr = kr
         self._Keq = Keq
         self._dH_expression = denthal_react
+
+    def build_thermo_constraint(self, thermoTem=298.15):
+        enthal_spe_cons = []
+        for j, spe in enumerate(self.specieslist):
+            enthal_spe_cons.append(spe.Enthalpy(thermoTem))
+        for j, dbe_idx in enumerate(self.dBE_index):
+            enthal_spe_cons[dbe_idx] += self._Pnlp[self._NEa + j]
+        
+        enthal_react_cons, Ea_cons = [], []
+        for i, rxn in enumerate(self.reactionlist):
+            Hreact_cons = 0
+            for j in range(self.nspe):
+                Hreact_cons += self.stoimat[i][j] * enthal_spe_cons[j]
+            enthal_react_cons.append(Hreact_cons)
+            if rxn.kinetic["type"] == 'BEP':
+                Ea = rxn.kinetic["data"]["alpha"] * Hreact_cons + rxn.kinetic["data"]["beta"]
+            else:
+                Ea = rxn.Arrhenius(thermoTem)['Ea']
+            # get thermodynamic constraint
+            if check_index(i, self.dEa_index):
+                ind = find_index(i, self.dEa_index)
+                Ea_cons.append(Ea + self._Pnlp[ind])
+            else:
+                Ea_cons.append(Ea)
+        ineq2 = cas.vertcat(Ea_cons) - cas.vertcat(enthal_react_cons)
+        thermal_consis_ineq = cas.vertcat([cas.vertcat(Ea_cons), ineq2])
+        self._thermo_constraint_expression = thermal_consis_ineq
 
     def build_rate(self, scale=1.0, des_scale=1):
         '''
@@ -217,6 +260,9 @@ class SimpleKinetic(ReactionNet):
         True: satify the thermodynamic consistency
         False: not satisfy
         '''
+        if self._thermo_constraint_expression is None:
+            self.build_thermo_constraint(thermoTem=298.15)
+        print(self._thermo_constraint_expression)
         Pnlp = self._Pnlp
         thermo_consis_fxn = cas.MXFunction('ThermoConsisFxn', [Pnlp], [self._thermo_constraint_expression])
         thermo_consis_fxn.setInput(dE_start, 'i0')
@@ -225,10 +271,8 @@ class SimpleKinetic(ReactionNet):
         return len(np.argwhere(viol_ < -tol)) == 0
     
     def CorrThermoConsis(self, dE_start, fix_Ea=[], fix_BE=[], print_screen=False):
-        if not print_screen:
-            old_stdout = sys.stdout
-            sys.stdout = tempfile.TemporaryFile()
-
+        if self._thermo_constraint_expression is None:
+            self.build_thermo_constraint(thermoTem=298.15)
         Pnlp = self._Pnlp
         ini_p = np.hstack([dE_start])
         dev = Pnlp - ini_p
@@ -243,7 +287,7 @@ class SimpleKinetic(ReactionNet):
         nlpopts['jac_d_constant'] = 'yes'
         nlpopts['expect_infeasible_problem'] = 'yes'
         nlpopts['hessian_approximation'] = 'exact'
-
+        # print(nlp)
         solver = cas.NlpSolver('solver', 'ipopt', nlp, nlpopts)
 
         # Bounds and initial guess
@@ -261,6 +305,10 @@ class SimpleKinetic(ReactionNet):
 
         lbG = 0 * np.ones(2 * self.nrxn)
         ubG = np.inf * np.ones(2 * self.nrxn)
+
+        if not print_screen:
+            old_stdout = sys.stdout
+            sys.stdout = tempfile.TemporaryFile()
 
         solution = solver(x0=ini_p, lbg=lbG, ubg=ubG, lbx=lbP, ubx=ubP)
         dE_corr = solution['x'].full().T[0].tolist()

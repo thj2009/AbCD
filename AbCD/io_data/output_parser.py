@@ -1,7 +1,11 @@
 from AbCD import ActiveSite, GasSpecies, SurfaceSpecies, Reaction
 from AbCD import CSTRCondition, VacTPDcondition, BATCHcondition
 from AbCD.utils import get_index_site, get_index_species, get_index_reaction
+from AbCD.utils import Constant as _const
 import numpy as np
+import json
+import os
+from collections import OrderedDict
 
 class Out_data(object):
 
@@ -30,16 +34,25 @@ class Out_data(object):
 
         # Reaction Basic Info
         out += 'Reaction Basic ThermoInfo @ %.2f K \n' % Tem
-        out += '{0:^6s} {1:^6s} {2:^30s} {3:^16s} {4:^12s} {5:^6s}\n'\
-                .format('#', 'name', 'reaction', 'pref (s-1)', 'Ea (kJ/mol)', 'n')
+        out += '{0:^6s} {1:^6s} {2:^30s} {6:^12s} {3:^16s} {4:^12s} {5:^6s}\n'\
+                .format('#', 'name', 'reaction', 'pref(s-1)', 'Ea(kJ/mol)', 'n', 'H(kJ/mol)')
         out += ('=='*40 + '\n')
+        
         reactionlist = network.reactionlist
-        for j, rxn in enumerate(reactionlist):
-            Arr = rxn.Arrhenius(Tem)
-            Ea = Arr['Ea']
-            n = Arr['n']
-            A = Arr['A']
-            out += '{0:^6d} {1:^6s} {2:^30s} {3:^16.3e} {4:^12.2f} {5:^6.2f}\n'.format(j, rxn.name, str(rxn), A, Ea, n)
+        for i, rxn in enumerate(reactionlist):
+            Hreact = 0
+            for j in range(network.nspe):
+                Hreact += network.stoimat[i][j] * specieslist[j].Enthalpy(Tem)
+            if rxn.kinetic["type"] == 'BEP':
+                Ea = rxn.kinetic["data"]["alpha"] * Hreact + rxn.kinetic["data"]["beta"]
+                A = _const.kb / _const.h
+                n = 1
+            else:
+                Arr = rxn.Arrhenius(Tem)
+                Ea = Arr['Ea']
+                n = Arr['n']
+                A = Arr['A']
+            out += '{0:^6d} {1:^6s} {2:^30s} {6:^12.2f} {3:^16.3e} {4:^12.2f} {5:^6.2f}\n'.format(i, rxn.name, str(rxn), A, Ea, n, Hreact)
         if prints:
             print(out)
         return out
@@ -343,6 +356,30 @@ class Out_data(object):
         import json
         with open(pesname, 'w') as fp:
             json.dump(pes, fp, indent=4)
+
+    def dump_species():
+        pass
+
+    def dump_reaction(reactionlist):
+        # parse reaction
+        reaction = []
+        for rxn in reactionlist:
+            rr = OrderedDict()
+            rr['name'] = rxn.name
+            
+            reactant = []
+            for rrrr in rxn.reactant:
+                reactant.append((str(rrrr[0]), int(rrrr[1])))
+            prod = []
+            for rrrr in rxn.product:
+                prod.append((str(rrrr[0]), int(rrrr[1])))
+            rr['reactant'] = reactant
+            rr['product'] = prod
+            if rr['name'] in rxn_need or len(rxn_need) == 0:
+                reaction.append(rr)
+            
+        with open(os.path.join(resultfld, 'reaction.mkm'), 'w') as fp:
+            json.dump(reaction, fp, indent=4)
 
 def cstr_output(cstr, condition):
 

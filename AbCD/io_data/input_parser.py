@@ -46,6 +46,7 @@ class In_data(object):
                 idx = get_index_site(data['site_name'], _dir_['sitelist'])
                 spe.site = _dir_['sitelist'][idx]
                 spe.denticity = int(data['denticity'])
+                spe.cov_dependent = data.get('cov_dependent', '')
             _dir_['specieslist'].append(spe)
 
     @staticmethod

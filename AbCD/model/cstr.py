@@ -121,6 +121,7 @@ class CSTR(KineticModel):
                 idx = get_index_species(spe, self.specieslist)
                 x0[idx-self.ngas] = cov
                 x0[-1] -= cov
+        print(x0)
         # Partial Pressure
         Pinlet = np.zeros(self.ngas)
         for idx, spe in enumerate(self.specieslist):
@@ -265,11 +266,16 @@ class CSTR(KineticModel):
             TotalPressure = condition.TotalPressure
             TotalFlow = condition.TotalFlow
             Tem = condition.Temperature
+            
             if condition.InitCoverage == {}:
                 x0 = [0] * (self.nspe - 1) + [1]
             else:
-                # TODO: construct initial coverage
-                pass
+                # Construct Coverage
+                x0 = [0] * (self.nspe - 1) + [1]
+                for spe, cov in condition.InitCoverage.items():
+                    idx = get_index_species(spe, self.specieslist)
+                    x0[idx-self.ngas] = cov
+                    x0[-1] -= cov
             # construct initial partial pressure
             Pinlet = np.zeros(self.ngas)
             for idx, spe in enumerate(self.specieslist):
@@ -358,6 +364,9 @@ class CSTR(KineticModel):
         obj = self.evidence_construct(conditionlist, evidence_info) + \
             self.prior_construct(prior_info)
         print(obj)
+        
+        if self._thermo_constraint_expression is None:
+            self.build_thermo_constraint(thermoTem=298.15)
         if constraint:
             nlp = dict(f=obj, x=Pnlp, g=self._thermo_constraint_expression)
         else:

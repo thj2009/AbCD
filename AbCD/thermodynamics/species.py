@@ -13,6 +13,7 @@ class Species(object):
         self._element = {}
         self.mass = 0                   # mass of speceis unit: g/mol
         self.dE = 0
+        self.cov_dependent = ''         # function of coverage dependent energy [kJ mol-1]
 
     def _read_element(self):
         '''
