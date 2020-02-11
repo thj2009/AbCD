@@ -22,6 +22,16 @@ def is_number(s):
         return False
 
 def get_index_species(spe, spelist, neglect=False):
+    """
+    return the index of a species in species list
+    Parameters
+    ----------
+    spe: string of species
+    spelist: list of species entry
+    neglect: bool
+        True: neglect the error
+        False: otherwise
+    """
     for i in range(len(spelist)):
             if spe == str(spelist[i]):
                 return i
@@ -30,6 +40,13 @@ def get_index_species(spe, spelist, neglect=False):
 
 
 def get_index_reaction(rxnname, rxnlist):
+    """
+    return the index of a reaction in reaction list
+    Parameters
+    ----------
+    rxnname: string, name of a reaction
+    rxnlist: list of reaction entry
+    """
     for i in range(len(rxnlist)):
         if rxnname == rxnlist[i].name:
             return i
