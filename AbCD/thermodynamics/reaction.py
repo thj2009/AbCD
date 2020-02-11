@@ -50,7 +50,8 @@ class Reaction(object):
             Arr['A'] = self.kinetic['data']['A']
             Arr['Ea'] = self.kinetic['data']['Ea']
             Arr['n'] = self.kinetic['data']['n']
-        elif self.kinetic['type'] == 'Shomate':
+        elif self.kinetic['type'] == 'Shomate' \
+             or self.kinetic['type'] == 'standard':
             H_R = self.IS_Enthalpy(temp)
             S_R = self.IS_Entropy(temp)
             H_TS = self.TS_Enthalpy(temp)
@@ -79,7 +80,8 @@ class Reaction(object):
             Hts += self.kinetic['data']['Ea']
             if corr:
                 Hts += self.dE
-        elif self.kinetic['type'] == 'Shomate':
+        elif self.kinetic['type'] == 'Shomate' \
+             or self.kinetic['type'] == 'standard':
             if corr:
                 Ea0 = _cal.Enthalpy(self.kinetic, temp) - self.IS_Enthalpy(temp)
                 Hts = self.IS_Enthalpy(temp, corr)
