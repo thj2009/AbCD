@@ -262,7 +262,7 @@ class SimpleKinetic(ReactionNet):
         '''
         if self._thermo_constraint_expression is None:
             self.build_thermo_constraint(thermoTem=298.15)
-        print(self._thermo_constraint_expression)
+        #print(self._thermo_constraint_expression)
         Pnlp = self._Pnlp
         thermo_consis_fxn = cas.MXFunction('ThermoConsisFxn', [Pnlp], [self._thermo_constraint_expression])
         thermo_consis_fxn.setInput(dE_start, 'i0')

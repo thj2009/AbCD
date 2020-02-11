@@ -121,7 +121,6 @@ class CSTR(KineticModel):
                 idx = get_index_species(spe, self.specieslist)
                 x0[idx-self.ngas] = cov
                 x0[-1] -= cov
-        print(x0)
         # Partial Pressure
         Pinlet = np.zeros(self.ngas)
         for idx, spe in enumerate(self.specieslist):
@@ -568,42 +567,6 @@ def _sample(dE_start, transi_matrix, sample_method):
     newE = np.array(dE_start) + np.array(deltaE)
     return list(newE)
 
-# def fwd_sensitivity_option(tf=5000, reltol=1e-8,
-                           # fwdtol=1e-4, adjtol=1e-4, abs_rel=1e-2):
-    # '''
-    # Options pass to CVODES for sensitivity analysis
-    # '''
-    # opts = {}
-    # opts['tf'] = tf
-
-    # opts['fsens_all_at_once'] = True
-    # opts['fsens_err_con'] = True
-    # opts['fsens_abstol'] = fwdtol * abs_rel
-    # opts['fsens_reltol'] = fwdtol
-    # opts['abstol'] = reltol * abs_rel
-    # opts['reltol'] = reltol
-    # opts['abstolB'] = adjtol * abs_rel
-    # opts['reltolB'] = adjtol
-
-    # opts['fsens_abstol'] = 1e-6
-    # opts['fsens_reltol'] = 1e-4
-    # opts['abstol'] = 1e-8
-    # opts['reltol'] = 1e-6
-    # opts['abstolB'] = 1e-6
-    # opts['reltolB'] = 1e-4
-    
-    
-    # opts['linear_multistep_method'] = 'bdf'
-    # opts['max_multistep_order'] = 5
-    # opts['use_preconditioner'] = True
-    # opts['use_preconditionerB'] = True
-    # opts['pretype'] = 'both'
-    # opts['pretypeB'] = 'both'
-    # opts['steps_per_checkpoint'] = 1000
-    # opts['disable_internal_warnings'] = True
-    # opts['max_num_steps'] = 10000
-    # opts['stop_at_end'] = True
-    # return opts
 
 
 def fwd_sensitivity_option(tf=5000, abstol=1e-8, reltol=1e-6):

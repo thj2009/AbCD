@@ -12,8 +12,4 @@ required packages
 -----------------
 1. numpy
 2. scipy
-3. casadi_2.4.2
-
-author: Huijie Tian
-
-email: hut216@lehigh.edu
+3. casadi_2.4.2 (https://github.com/casadi/casadi/releases?after=3.0.0-rc3)
