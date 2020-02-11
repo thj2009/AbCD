@@ -3,9 +3,9 @@
 ##Ab-initio Catalyst Dynamic
 
 including feature:
-Mean-field Microkinetic Modeling
-Parameter Estimation
-Bayesian Inference
+[1]Mean-field Microkinetic Modeling
+[2]Parameter Estimation
+[3]Bayesian Inference
 
 author: Huijie Tian
 
