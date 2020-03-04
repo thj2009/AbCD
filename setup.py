@@ -1,4 +1,4 @@
-from distutils.core import setup
+from setuptools import setup, find_packages
 
 setup(name='AbCD',
       version='0.5',
@@ -6,5 +6,5 @@ setup(name='AbCD',
       author='Huijie Tian',
       author_email='hut216@lehigh.edu',
       url='',
-      packages=['thermodynamics', 'io_data', 'model'],
+      packages=find_packages(),
      )
