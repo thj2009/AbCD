@@ -179,7 +179,7 @@ class CSTR(KineticModel):
         self.equil_rate_const_value['kf'] = list(k_fxn.getOutput('o2').full().T[0])
         self.equil_rate_const_value['kr'] = list(k_fxn.getOutput('o3').full().T[0])
 
-        xrc = []
+        xrc, xtrc = [], []
         # TODO: degree of rate control
         if DRX:
             delG = drc_opt.get('delG', 1)
@@ -215,6 +215,49 @@ class CSTR(KineticModel):
                 if numer == 'cent':
                     xrc.append((tor_p - tor_n)/tor0/(-2 * delG * 1000 /(_const.Rg * Tem)))
                     #xrc.append((np.log(np.abs(tor_p)) - np.log(np.abs(tor_n)))/(-2 * delG * 1000 /(_const.Rg * Tem)))
+            
+            # XTRC
+            for idx, j in enumerate(self.dBE_index):
+                spe = self.reactionlist[idx]
+                dP = np.copy(dE_start)
+                deltaE = np.zeros(self.nspe)
+                deltaE[j] += delG
+                # propagate through stoichiomatric
+                deltaEa = self.stoimat.dot(deltaE)
+                
+                #dP[:len(self.dEa_index)] -= deltaEa
+                dP[len(self.dEa_index):] += deltaE[self.dBE_index]
+                
+                # Partial Pressure
+                P_dae = np.hstack([dP, Pinlet, Tem, TotalFlow])
+                F_sim = Fint(x0=x0, p=P_dae)
+                for ii, spe in enumerate(self.specieslist):
+                    if str(spe) == ref_species:
+                        tor_p = float(F_sim['xf'][ii] - Pinlet[ii]/TotalPressure * TotalFlow)
+                
+                if numer == 'fwd':
+                    xtrc.append((tor_p - tor0)/tor0/(-delG * 1000 /(_const.Rg * Tem)))
+                    #xrc.append((np.log(np.abs(tor_p)) - np.log(np.abs(tor0)))/(-delG * 1000 /(_const.Rg * Tem)))
+                
+                if numer == 'cent':
+                    dP = np.copy(dE_start)
+                    deltaE = np.zeros(self.nspe)
+                    deltaE[j] -= delG
+                    # propagate through stoichiomatric
+                    deltaEa = self.stoimat.dot(deltaE)
+                    
+                    #dP[:len(self.dEa_index)] -= deltaEa
+                    dP[len(self.dEa_index):] += deltaE[self.dBE_index]
+                    
+                    # Partial Pressure
+                    P_dae = np.hstack([dP, Pinlet, Tem, TotalFlow])
+                    F_sim = Fint(x0=x0, p=P_dae)
+                    for ii, spe in enumerate(self.specieslist):
+                        if str(spe) == ref_species:
+                            tor_n = float(F_sim['xf'][ii] - Pinlet[ii]/TotalPressure * TotalFlow)
+                    xtrc.append((tor_p - tor_n)/tor0/(-2 * delG * 1000 /(_const.Rg * Tem)))
+
+        
         # RESULT
         result = {}
         result['pressure'] = self.pressure_value
@@ -223,6 +266,7 @@ class CSTR(KineticModel):
         result['energy'] = self.energy_value
         result['equil_rate'] = self.equil_rate_const_value
         result['xrc'] = xrc
+        result['xtrc'] = xtrc
         
         self.xrc = xrc
         return tor, result

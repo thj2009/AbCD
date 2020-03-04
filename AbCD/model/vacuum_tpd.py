@@ -61,6 +61,7 @@ class VacuumTPD(KineticModel):
         Build the dae system of transient CSTR model
         :param tau: space time of CSTR model
         '''
+        self.pump_ratio = pump_level / float(A_V_ratio)
         self._Tem = self._T0 + self._beta * self._t
         self.build_kinetic(constTem=constTem)
         self.build_rate(scale=1, des_scale=des_scale)
@@ -109,6 +110,7 @@ class VacuumTPD(KineticModel):
         
         # Evaluate
         out = Fsim.getOutput().full()
+        out[:self.ngas, :] *= self.pump_ratio
         return out
 
     def init_condition(self, condition):
