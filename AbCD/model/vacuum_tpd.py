@@ -9,6 +9,7 @@ from AbCD.utils import get_index_species
 class TPDcondition(object):
     def __init__(self, name=''):
         self.name = name
+        self.ctype = "TPD"
         self.T0 = 100
         self.Tf = None
         self.Beta = 10
@@ -81,7 +82,9 @@ class VacuumTPD(KineticModel):
 
     def fwd_simulation(self, dE_start, condition, detail=True,
                        reltol=1e-6, abstol=1e-8):
-
+        # reevaluate the reaction condition
+        condition._calSim()
+        condition._calGrid()
         time = condition.TimeGrid
         T0 = condition.T0
         beta = condition.Beta

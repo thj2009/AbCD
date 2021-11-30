@@ -136,6 +136,7 @@ class DynamicCSTR(KineticModel):
         self.timeGrid = tgrid[NSS:]
         self.control = control[:, NSS:]
         self.output = Fsim.getOutput().full()[:, NSS:]
+        return Fsim.getOutput().full()[:, NSS:]
 
     def _calControledVar(self, condition):
         '''

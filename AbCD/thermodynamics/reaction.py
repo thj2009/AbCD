@@ -68,10 +68,10 @@ class Reaction(object):
         return Ea, Ear
     
     def Cal_A_Ar(self, temp=273.15):
-        A = self.Arrhenius(temp)['A']
         n = self.Arrhenius(temp)['n']
+        A = self.Arrhenius(temp)['A'] * (temp ** n)
         S = self.dS_Entropy(temp)
-        Ar = A * np.exp(-S / _const.Rg)
+        Ar = A  * np.exp(-S / _const.Rg)
         return A, Ar
 
     def TS_Enthalpy(self, temp=273.15, corr=False):

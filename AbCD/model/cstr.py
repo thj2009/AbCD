@@ -8,20 +8,24 @@ import time
 from AbCD.utils import Constant as _const
 from AbCD.utils import get_index_species, check_index, find_index
 
+
 class CSTRCondition(object):
     '''
     CSTR reaction condition class
     '''
+
     def __init__(self, name=''):
         self.name = name
+        self.ctype = "CSTR"
         self.Temperature = 298.15       # unit Kelvin
         self.TotalPressure = 1          # total pressure, unit: atm
         self.TotalFlow = 0.00           # unit: s-1
         self.TotalSite = 0.00           # unit: total mole of activesite
         self.SimulationTime = 0
-        self.PartialPressure = {}        # Dictionary to store the partial pressure of gas phase species
+        # Dictionary to store the partial pressure of gas phase species
+        self.PartialPressure = {}
         self.TurnOverFrequency = {}      # Dictionary to store outlet turnover frequency
-        self.InitCoverage = {}           # Initial Coverage 
+        self.InitCoverage = {}           # Initial Coverage
         self.Coverage = {}              # Coverage from experimental measurement
 
     def __repr__(self):
@@ -33,10 +37,10 @@ class CSTRCondition(object):
         '''
         out = ''
         out += self.name + '\n'
-        out += 'Temperature = %.2f K' %(self.Temperature) + '\n'
-        out += 'Total Flow rate = %.2e s-1' %(self.TotalFlow) + '\n'
-        out += 'Simulation time = %.2e s' %(self.SimulationTime) + '\n'
-        out += 'Inlet Pressure (atm): %.2e' %(self.TotalPressure) + '\n'
+        out += 'Temperature = %.2f K' % (self.Temperature) + '\n'
+        out += 'Total Flow rate = %.2e s-1' % (self.TotalFlow) + '\n'
+        out += 'Simulation time = %.2e s' % (self.SimulationTime) + '\n'
+        out += 'Inlet Pressure (atm): %.2e' % (self.TotalPressure) + '\n'
         for key, value in self.PartialPressure.items():
             out += '    {0:<10s} {1:<10.2e}'.format(key, value) + '\n'
         out += 'Experiment Outlet' + '\n'
@@ -49,15 +53,17 @@ class CSTR(KineticModel):
     '''
     CSTR modeling TOOL
     '''
+
     def __init__(self, specieslist, reactionlist, dEa_index, dBE_index):
-        KineticModel.__init__(self, specieslist, reactionlist, dEa_index, dBE_index)
+        KineticModel.__init__(
+            self, specieslist, reactionlist, dEa_index, dBE_index)
         self.pressure_value = []
         self.coverage_value = []
         self.rate_value = {}
         self.equil_rate_const_value = {}
         self.energy_value = {}
         self.xrc = []
-        
+
         self._t = cas.SX.sym('t', 1)                # Time
         self._partP_in = cas.SX.sym('partP_in', self.ngas)
         self._Flowtot = cas.SX.sym('Flowtot', 1)
@@ -88,10 +94,12 @@ class CSTR(KineticModel):
         for j in range(self.nsurf):
             self._d_cover[j] = 0
             for i in range(self.nrxn):
-                self._d_cover[j] += self.stoimat[i][j + self.ngas] * self._rate[i]
+                self._d_cover[j] += self.stoimat[i][j +
+                    self.ngas] * self._rate[i]
         self._x = cas.vertcat([self._flow, self._cover])
         # ???
-        self._p = cas.vertcat([self._dEa, self._dBE, self._partP_in, self._Tem, self._Flowtot])
+        self._p = cas.vertcat(
+            [self._dEa, self._dBE, self._partP_in, self._Tem, self._Flowtot])
         self._xdot = cas.vertcat([self._d_flow, self._d_cover])
         self._dae_ = dict(x=self._x, p=self._p, ode=self._xdot)
 
@@ -108,10 +116,10 @@ class CSTR(KineticModel):
         opts['abstol'] = abstol
         opts['reltol'] = reltol
         opts['disable_internal_warnings'] = True
-        opts['max_num_steps'] = 1e5
+        opts['max_num_steps'] = 1e8
 
         Fint = cas.Integrator('Fint', 'cvodes', self._dae_, opts)
-        
+
         if condition.InitCoverage == {}:
             x0 = [0] * (self.nspe - 1) + [1]
         else:
@@ -119,23 +127,26 @@ class CSTR(KineticModel):
             x0 = [0] * (self.nspe - 1) + [1]
             for spe, cov in condition.InitCoverage.items():
                 idx = get_index_species(spe, self.specieslist)
-                x0[idx-self.ngas] = cov
+                x0[idx - self.ngas] = cov
                 x0[-1] -= cov
         # Partial Pressure
         Pinlet = np.zeros(self.ngas)
         for idx, spe in enumerate(self.specieslist):
             if spe.phase == 'gaseous':
-                Pinlet[idx] = condition.PartialPressure[str(spe)] if str(spe) in condition.PartialPressure.keys() else 0
+                Pinlet[idx] = condition.PartialPressure[str(spe)] if str(
+                    spe) in condition.PartialPressure.keys() else 0
         P_dae = np.hstack([dE_start, Pinlet, Tem, TotalFlow])
         F_sim = Fint(x0=x0, p=P_dae)
         tor = {}
         for idx, spe in enumerate(self.specieslist):
             if spe.phase == 'gaseous':
-                tor[str(spe)] = float(F_sim['xf'][idx] - Pinlet[idx]/TotalPressure * TotalFlow)
+                tor[str(spe)] = float(F_sim['xf'][idx] -
+                        Pinlet[idx]/TotalPressure * TotalFlow)
 
         # Detailed Reaction network data
         # Evaluate partial pressure and surface coverage
-        self.pressure_value = list((F_sim['xf'][:self.ngas]/TotalFlow * TotalPressure).full().T[0])
+        self.pressure_value = list(
+            (F_sim['xf'][:self.ngas]/TotalFlow * TotalPressure).full().T[0])
         self.coverage_value = list(F_sim['xf'][self.ngas:].full().T[0])
 
         # Evaluate Reaction Rate automatically save to Rate attribute
@@ -152,7 +163,7 @@ class CSTR(KineticModel):
         self.rate_value['rnet'] = rate_fxn.getOutput('o0').full().T[0].tolist()
         self.rate_value['rfor'] = rate_fxn.getOutput('o1').full().T[0].tolist()
         self.rate_value['rrev'] = rate_fxn.getOutput('o2').full().T[0].tolist()
-        
+
         # Evaluate Reaction Energy
         ene_fxn = cas.SXFunction('ene_fxn', [x, p],
                                 [self._reaction_energy_expression['activation'],
@@ -161,9 +172,11 @@ class CSTR(KineticModel):
         ene_fxn.setInput(P_dae, 'i1')
         ene_fxn.evaluate()
         self.energy_value = {}
-        self.energy_value['activation'] = list(ene_fxn.getOutput('o0').full().T[0])
-        self.energy_value['enthalpy'] = list(ene_fxn.getOutput('o1').full().T[0])
-        
+        self.energy_value['activation'] = list(
+            ene_fxn.getOutput('o0').full().T[0])
+        self.energy_value['enthalpy'] = list(
+            ene_fxn.getOutput('o1').full().T[0])
+
         # Evaluate Equilibrium Constant and Rate Constant
         k_fxn = cas.SXFunction('k_fxn', [x, p],
                                [self._Keq,
@@ -174,10 +187,14 @@ class CSTR(KineticModel):
         k_fxn.setInput(P_dae, 'i1')
         k_fxn.evaluate()
         self.equil_rate_const_value = {}
-        self.equil_rate_const_value['Keq'] = list(k_fxn.getOutput('o0').full().T[0])
-        self.equil_rate_const_value['Qeq'] = list(k_fxn.getOutput('o1').full().T[0])
-        self.equil_rate_const_value['kf'] = list(k_fxn.getOutput('o2').full().T[0])
-        self.equil_rate_const_value['kr'] = list(k_fxn.getOutput('o3').full().T[0])
+        self.equil_rate_const_value['Keq'] = list(
+            k_fxn.getOutput('o0').full().T[0])
+        self.equil_rate_const_value['Qeq'] = list(
+            k_fxn.getOutput('o1').full().T[0])
+        self.equil_rate_const_value['kf'] = list(
+            k_fxn.getOutput('o2').full().T[0])
+        self.equil_rate_const_value['kr'] = list(
+            k_fxn.getOutput('o3').full().T[0])
 
         xrc, xtrc = [], []
         # TODO: degree of rate control
@@ -186,7 +203,24 @@ class CSTR(KineticModel):
             ref_species = drc_opt.get('ref', 'H2(g)')
             numer = drc_opt.get('numer', 'fwd')
             tor0 = tor[ref_species]
+            if numer == 'ad':
+                opts = fwd_sensitivity_option(tf=tf, reltol=1e-8, abstol=1e-16)
+                Fint = cas.Integrator('Fint', 'cvodes', self._dae_, opts)
+                Pnlp = self._Pnlp
+                P_dae = cas.vertcat([Pnlp, Pinlet, Tem, TotalFlow])
+                F_sim = Fint(x0=x0, p=P_dae)
 
+                ii = [ii for ii, spe in enumerate(self.specieslist) if str(spe) == ref_species][0]
+                tor_ad = F_sim['xf'][ii] - Pinlet[ii]/TotalPressure * TotalFlow
+
+                # define the jacobian and MX function
+                jac = cas.jacobian(tor_ad, Pnlp)
+                # evaluate the jacobian
+                fjac = cas.MXFunction('fjac', [Pnlp], [jac])
+                xrc = fjac([np.copy(dE_start)])[0]		
+                xrc = xrc / tor0 * (_const.Rg * Tem) / (-1000)
+                xrc = xrc.full()[0].tolist()[:len(self.dEa_index)]
+	            
             for idx, j in enumerate(self.dEa_index):
                 dP = np.copy(dE_start)
                 dP[idx] += delG
@@ -211,10 +245,10 @@ class CSTR(KineticModel):
             
                 if numer == 'fwd':
                     xrc.append((tor_p - tor0)/tor0/(-delG * 1000 /(_const.Rg * Tem)))
-                    #xrc.append((np.log(np.abs(tor_p)) - np.log(np.abs(tor0)))/(-delG * 1000 /(_const.Rg * Tem)))
+                    # xrc.append((np.log(np.abs(tor_p)) - np.log(np.abs(tor0)))/(-delG * 1000 /(_const.Rg * Tem)))
                 if numer == 'cent':
                     xrc.append((tor_p - tor_n)/tor0/(-2 * delG * 1000 /(_const.Rg * Tem)))
-                    #xrc.append((np.log(np.abs(tor_p)) - np.log(np.abs(tor_n)))/(-2 * delG * 1000 /(_const.Rg * Tem)))
+                    # xrc.append((np.log(np.abs(tor_p)) - np.log(np.abs(tor_n)))/(-2 * delG * 1000 /(_const.Rg * Tem)))
             
             # XTRC
             for idx, j in enumerate(self.dBE_index):
@@ -225,7 +259,7 @@ class CSTR(KineticModel):
                 # propagate through stoichiomatric
                 deltaEa = self.stoimat.dot(deltaE)
                 
-                #dP[:len(self.dEa_index)] -= deltaEa
+                # dP[:len(self.dEa_index)] -= deltaEa
                 dP[len(self.dEa_index):] += deltaE[self.dBE_index]
                 
                 # Partial Pressure
@@ -237,7 +271,7 @@ class CSTR(KineticModel):
                 
                 if numer == 'fwd':
                     xtrc.append((tor_p - tor0)/tor0/(-delG * 1000 /(_const.Rg * Tem)))
-                    #xrc.append((np.log(np.abs(tor_p)) - np.log(np.abs(tor0)))/(-delG * 1000 /(_const.Rg * Tem)))
+                    # xrc.append((np.log(np.abs(tor_p)) - np.log(np.abs(tor0)))/(-delG * 1000 /(_const.Rg * Tem)))
                 
                 if numer == 'cent':
                     dP = np.copy(dE_start)
@@ -246,7 +280,7 @@ class CSTR(KineticModel):
                     # propagate through stoichiomatric
                     deltaEa = self.stoimat.dot(deltaE)
                     
-                    #dP[:len(self.dEa_index)] -= deltaEa
+                    # dP[:len(self.dEa_index)] -= deltaEa
                     dP[len(self.dEa_index):] += deltaE[self.dBE_index]
                     
                     # Partial Pressure
@@ -285,9 +319,8 @@ class CSTR(KineticModel):
             
     def evidence_construct(self, conditionlist, evidence_info, sensitivity=True):
         # simulation option
-        reltol = evidence_info.get('reltol', 1e-12)
-        fwdtol = evidence_info.get('fwdtol', 1e-4)
-        adjtol = evidence_info.get('adjtol', 1e-4)
+        reltol = evidence_info.get('reltol', 1e-6)
+        abstol = evidence_info.get('abstol', 1e-10)
         # error value
         err_type = evidence_info['type']
         err = evidence_info['err']
@@ -301,7 +334,7 @@ class CSTR(KineticModel):
             # opts = fwd_sensitivity_option(reltol=reltol, adjtol=adjtol, fwdtol=fwdtol)
             opts = fwd_sensitivity_option()
         else:
-            opts = fwd_NoSensitivity_option(reltol=reltol)
+            opts = fwd_NoSensitivity_option(reltol=reltol, abstol=abstol)
         print(opts)
         Fint = cas.Integrator('Fint', 'cvodes', self._dae_, opts)
         evidence = 0
@@ -510,9 +543,9 @@ class CSTR(KineticModel):
         log_likeli_prev, log_prior_prev = self.eval_prob(dE_start, conditionlist, evidence_info, prior_info)
         log_posterior_prev = log_likeli_prev + log_prior_prev
 
-        #likeli_prev = np.exp(-float(prob_fxn.getOutput('o0')))
-        #prior_prev = np.exp(-float(prob_fxn.getOutput('o1')))
-        #posterior_prev = likeli_prev * prior_prev
+        # likeli_prev = np.exp(-float(prob_fxn.getOutput('o0')))
+        # prior_prev = np.exp(-float(prob_fxn.getOutput('o1')))
+        # posterior_prev = likeli_prev * prior_prev
 
         header = '{0:^10s}  {1:^15s}  {2:^15s}  {3:^15s}  {4:^15s}  {5:^15s}'. \
                      format('step', 'log(prior)', 'log(likelihood)', 'log(posterior)', 'accept%', 'infeasi%') + '\n'
@@ -551,25 +584,25 @@ class CSTR(KineticModel):
                     # Evaluate the posterior distribution
                     log_likeli_star, log_prior_star = self.eval_prob(Estar, conditionlist, evidence_info, prior_info)
                     log_posterior_star = log_likeli_star + log_prior_star
-                    #likeli_star = np.exp(-float(prob_fxn.getOutput('o0')))
-                    #prior_star = np.exp(-float(prob_fxn.getOutput('o1')))
-                    #posterior_star = likeli_star * prior_star
+                    # likeli_star = np.exp(-float(prob_fxn.getOutput('o0')))
+                    # prior_star = np.exp(-float(prob_fxn.getOutput('o1')))
+                    # posterior_star = likeli_star * prior_star
                     if save_result:
                         for condi in conditionlist:
                             pass
                     # Determine accept or reject
                     UU = np.random.uniform()
                     AA = min(1, np.exp(log_posterior_star - log_posterior_prev))
-                    #AA = min(1, posterior_star / posterior_prev)
+                    # AA = min(1, posterior_star / posterior_prev)
                     if UU < AA:
                         # ACCEPT
                         Eprev = np.copy(Estar)
                         log_prior_prev = log_prior_star
                         log_likeli_prev = log_likeli_star
                         log_posterior_prev = log_posterior_star
-                        #prior_prev = prior_star
-                        #likeli_prev = likeli_star
-                        #posterior_prev = posterior_star
+                        # prior_prev = prior_star
+                        # likeli_prev = likeli_star
+                        # posterior_prev = posterior_star
                         # OPTION: Evaluate the reaction kinetics
                         if save_result:
                             tor_prev, result_prev = self.condilist_fwd_simul(Estar, conditionlist)
@@ -613,55 +646,55 @@ def _sample(dE_start, transi_matrix, sample_method):
 
 
 
-def fwd_sensitivity_option(tf=5000, abstol=1e-8, reltol=1e-6):
+def fwd_sensitivity_option(tf=5000, abstol=1e-12, reltol=1e-8):
     '''
     Options pass to CVODES for sensitivity analysis
     '''
     opts = {}
     opts['tf'] = tf
     # opts["linear_solver"] = "csparse"
-    #opts["linear_solver_type"] = "user_defined"
-    #opts['t0'] = 0
-    #opts['print_stats'] = True
+    # opts["linear_solver_type"] = "user_defined"
+    # opts['t0'] = 0
+    # opts['print_stats'] = True
     opts['fsens_all_at_once'] = True
     opts['fsens_err_con'] = True
     opts['fsens_abstol'] = 1e-6
-    opts['fsens_reltol'] = 1e-5
+    opts['fsens_reltol'] = 1e-4
     opts['abstol'] = abstol
     opts['reltol'] = reltol
     opts['abstolB'] = 1e-6
-    opts['reltolB'] = 1e-5
-    #opts['ad_weight'] = 0
+    opts['reltolB'] = 1e-4
+    # opts['ad_weight'] = 0
 #    opts['ad_weight_sp'] = 1
     opts['linear_multistep_method'] = 'bdf'
 #    opts['exact_jacobian'] = False
 #    opts['linear_solverB'] = 'lapacklu'
-    #opts['linear_solver_typeB'] = 'dense'
+    # opts['linear_solver_typeB'] = 'dense'
 #    opts['iterative_solverB'] = 'gmres'
-    #opts['interpolation_type'] ='polynomial'
+    # opts['interpolation_type'] ='polynomial'
     opts['max_multistep_order'] = 5
     opts['use_preconditioner'] = True
     opts['use_preconditionerB'] = True
     opts['pretype'] = 'both'
     opts['pretypeB'] = 'both'
     opts['steps_per_checkpoint'] = 1e3
-    #opts['nonlinear_solver_iteration'] = 'functional'
-    #opts['linear_solver_typeB'] = 'iterative' 
+    # opts['nonlinear_solver_iteration'] = 'functional'
+    # opts['linear_solver_typeB'] = 'iterative' 
     opts['disable_internal_warnings'] = True
-    #opts['sensitivity_method'] = 'staggered'
-    opts['max_num_steps'] = 1e5
+    # opts['sensitivity_method'] = 'staggered'
+    opts['max_num_steps'] = 1e9
     opts['stop_at_end'] = True
     return opts
 
 
-def fwd_NoSensitivity_option(tf=1000000, reltol=1e-8, abs_rel=1e-2):
+def fwd_NoSensitivity_option(tf=1000000, reltol=1e-8, abstol=1e-12):
     '''
     Options pass to CVODES integration
     '''
     opts = {}
     opts['tf'] = tf       # Simulation time
-    opts['abstol'] = reltol * abs_rel
+    opts['abstol'] = abstol
     opts['reltol'] = reltol
     opts['disable_internal_warnings'] = True
-    opts['max_num_steps'] = 1e5
+    opts['max_num_steps'] = 1e9
     return opts

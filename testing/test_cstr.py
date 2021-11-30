@@ -3,8 +3,8 @@ from AbCD.io_data import In_data
 from AbCD import CSTR
 import numpy as np
 
-sitelist, specieslist, reactionlist = In_data.load_mkm('./testing/WGSdata/')
-conditionlist = In_data.load_condition('./testing/WGSdata/')
+sitelist, specieslist, reactionlist = In_data.load_mkm('./WGSdata/')
+conditionlist = In_data.load_condition('./WGSdata/')
 
 dBE_index = [4, 5, 6, 7, 8, 9, 10, 11]
 dEa_index = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]
@@ -25,7 +25,11 @@ def test_cstr_build():
     assert wgs_cstr.CheckThermoConsis(E)
 
     for condi in conditionlist:
-        print wgs_cstr.fwd_simulation(E, condi, reltol=1e-12, abstol=1e-14)
+        tor, _ = wgs_cstr.fwd_simulation(E, condi, reltol=1e-12, abstol=1e-14)
+        print tor
+
+if __name__ == "__main__":
+    test_cstr_build()
 
 
 

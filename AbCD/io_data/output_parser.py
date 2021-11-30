@@ -58,6 +58,48 @@ class Out_data(object):
         return out
 
     @staticmethod
+    def print_result(reactor, result, prints=True):
+        out = ""
+        out += "{0:15s}   {1:15s}\n".format("species", "pressure(atm)")
+        for i, spe in enumerate(reactor.specieslist):
+            # pressure
+            if spe.phase == 'gaseous':
+                out += "{0:15s}   {1:15.3e}\n".format(str(spe), result['pressure'][i])
+        out += '\n'
+        out += "{0:15s}   {1:15s}\n".format("species", "coverage")
+        for i, spe in enumerate(reactor.specieslist):
+            # coverage
+            if spe.phase == 'surface':
+                out += "{0:15s}   {1:15.3e}\n".format(str(spe), result['coverage'][i - reactor.ngas])
+        out += '\n'
+        out += "{0:10s}  {1:15s}  {2:15s}  {3:15s}\n".format("reaction", "rfwd", "rrev", "rnet")
+        for j, rxn in enumerate(reactor.reactionlist):
+            out += "{0:10s}  {1:15.3e}  {2:15.3e}  {3:15.3e}\n".\
+                format(rxn.name, result['rate']['rfor'][j], result['rate']['rrev'][j], result['rate']['rnet'][j])
+        """
+        out += '\n\n'
+        out += '{0:^5s}  {1:^10s}  {2:^10s}\n'.format('idx', 'reaction', 'XRC')
+        out += '==' * 30 + '\n'
+        for j, rxn in enumerate(reactor.reactionlist):
+            if j in reactor.dEa_index:
+                idx = reactor.dEa_index.index(j)
+                out += '{0:^5d}  {1:^10s}  {2:^10.2f}\n'.format(j, rxn.name, result["xrc"][idx])
+        out += '{0:^5s}  {1:^10s}  {2:^10.2f}\n'.format('--', 'sum', sum(result["xrc"]))
+        
+        
+        out += '\n\n'
+        out += '{0:^5s}  {1:^10s}  {2:^10s}\n'.format('idx', 'species', 'XTRC')
+        out += '==' * 30 + '\n'
+        for i, spe in enumerate(reactor.specieslist):
+            if i in reactor.dBE_index:
+                idx = reactor.dBE_index.index(i)
+                out += '{0:^5d}  {1:^10s}  {2:^10.2f}\n'.format(i, str(spe), result["xtrc"][idx])
+        """
+        if prints:
+            print(out)
+        return out
+
+    @staticmethod
     def print_optimization(network, dE_opt, dE_prime=None, Tem=298.15):
         dEa_index = network.dEa_index
         dBE_index = network.dBE_index
@@ -392,10 +434,10 @@ def cstr_output(cstr, condition):
         if spe.phase == 'surface':
             out += '{0:^5d}  {1:^40s}  {2:^10.3e}\n'.format(i-cstr.ngas, spe, cstr.coverage_value[i-cstr.ngas])
     out += '\n\n'
-    out += '{0:^5s}  {1:^10s}  {2:^10s}  {3:^10s}  {4:^10s}\n'.format('idx', 'reaction', 'rfwd', 'rrev', 'rnet')
+    out += '{0:^5s}  {1:^10s}  {2:^10s}  {3:^10s}  {4:^10s}  {5:^10s}  {6:^10s}\n'.format('idx', 'reaction', 'rfwd', 'rrev', 'rnet', 'Keq', 'Qeq')
     out += '==' * 30 + '\n'
     for i, rxn in enumerate(cstr.reactionlist):
-        out += '{0:^5d}  {1:^10s}  {2:^10.2e}  {3:^10.2e}  {4:^10.2e}\n'.format(i, rxn.name, cstr.rate_value['rfor'][i], cstr.rate_value['rrev'][i], cstr.rate_value['rnet'][i])
+        out += '{0:^5d}  {1:^10s}  {2:^10.2e}  {3:^10.2e}  {4:^10.2e}  {5:^10.3e}  {6:^10.3e}\n'.format(i, rxn.name, cstr.rate_value['rfor'][i], cstr.rate_value['rrev'][i], cstr.rate_value['rnet'][i], cstr.equil_rate_const_value['Keq'][i], cstr.equil_rate_const_value['Qeq'][i])
 
     out += '\n\n'
     out += '{0:^5s}  {1:^10s}  {2:^10s}\n'.format('idx', 'reaction', 'DRX')
@@ -423,3 +465,9 @@ def assign_correction(network, dE):
             rxn.dE = 0
         else:
             rxn.dE = Ea[dEa_index.index(j)]
+
+
+
+
+
+
