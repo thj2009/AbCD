@@ -3,6 +3,7 @@ __pycache__/
 .spyproject/
 .idea/
 .pytest_cache/
+.vscode/
 
 # ignore compile file
 *.pyc
