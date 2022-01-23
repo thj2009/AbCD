@@ -8,6 +8,10 @@ import time
 from AbCD.utils import Constant as _const
 from AbCD.utils import get_index_species, check_index, find_index
 
+if sys.version_info[0] == 2:
+    py = 2
+elif sys.version_info[0] == 3:
+    py = 3
 
 class CSTRCondition(object):
     '''
@@ -79,7 +83,7 @@ class CSTR(KineticModel):
         Build the dae system of transient CSTR model
         :param tau: space time of CSTR model
         '''
-        Ptot = cas.sumRows(self._partP_in)            # Total Pressure
+        Ptot = cas.sum1(self._partP_in)            # Total Pressure
         for i in range(self.ngas):
             self._partP[i] = self._flow[i]/self._Flowtot * Ptot
         self.build_kinetic(thermoTem=Tem)
@@ -96,11 +100,15 @@ class CSTR(KineticModel):
             for i in range(self.nrxn):
                 self._d_cover[j] += self.stoimat[i][j +
                     self.ngas] * self._rate[i]
-        self._x = cas.vertcat([self._flow, self._cover])
-        # ???
-        self._p = cas.vertcat(
-            [self._dEa, self._dBE, self._partP_in, self._Tem, self._Flowtot])
-        self._xdot = cas.vertcat([self._d_flow, self._d_cover])
+        if py == 2:
+            self._x = cas.vertcat([self._flow, self._cover])
+            self._p = cas.vertcat(
+                [self._dEa, self._dBE, self._partP_in, self._Tem, self._Flowtot])
+            self._xdot = cas.vertcat([self._d_flow, self._d_cover])
+        elif py == 3:
+            self._x = cas.vertcat(self._flow, self._cover)
+            self._p = cas.vertcat(self._dEa, self._dBE, self._partP_in, self._Tem, self._Flowtot)
+            self._xdot = cas.vertcat(self._d_flow, self._d_cover)
         self._dae_ = dict(x=self._x, p=self._p, ode=self._xdot)
 
     def fwd_simulation(self, dE_start, condition, detail=True,
@@ -118,7 +126,10 @@ class CSTR(KineticModel):
         opts['disable_internal_warnings'] = True
         opts['max_num_steps'] = 1e8
 
-        Fint = cas.Integrator('Fint', 'cvodes', self._dae_, opts)
+        if py == 2:
+            Fint = cas.Integrator('Fint', 'cvodes', self._dae_, opts)
+        elif py == 3:
+            Fint = cas.integrator('Fint', 'cvodes', self._dae_, opts)
 
         if condition.InitCoverage == {}:
             x0 = [0] * (self.nspe - 1) + [1]
@@ -152,49 +163,84 @@ class CSTR(KineticModel):
         # Evaluate Reaction Rate automatically save to Rate attribute
         x = self._x
         p = self._p
-        rate_fxn = cas.SXFunction('rate_fxn', [x, p],
-                                  [self._rate,
-                                  self._rfor,
-                                  self._rrev])
-        rate_fxn.setInput(F_sim['xf'], 'i0')
-        rate_fxn.setInput(P_dae, 'i1')
-        rate_fxn.evaluate()
-        self.rate_value = {}
-        self.rate_value['rnet'] = rate_fxn.getOutput('o0').full().T[0].tolist()
-        self.rate_value['rfor'] = rate_fxn.getOutput('o1').full().T[0].tolist()
-        self.rate_value['rrev'] = rate_fxn.getOutput('o2').full().T[0].tolist()
+        if py == 2:
+            rate_fxn = cas.SXFunction('rate_fxn', [x, p],
+                                    [self._rate,
+                                    self._rfor,
+                                    self._rrev])
+            rate_fxn.setInput(F_sim['xf'], 'i0')
+            rate_fxn.setInput(P_dae, 'i1')
+            rate_fxn.evaluate()
+                
+            self.rate_value = {}
+            self.rate_value['rnet'] = rate_fxn.getOutput('o0').full().T[0].tolist()
+            self.rate_value['rfor'] = rate_fxn.getOutput('o1').full().T[0].tolist()
+            self.rate_value['rrev'] = rate_fxn.getOutput('o2').full().T[0].tolist()
 
-        # Evaluate Reaction Energy
-        ene_fxn = cas.SXFunction('ene_fxn', [x, p],
-                                [self._reaction_energy_expression['activation'],
-                                self._reaction_energy_expression['enthalpy']])
-        ene_fxn.setInput(F_sim['xf'], 'i0')
-        ene_fxn.setInput(P_dae, 'i1')
-        ene_fxn.evaluate()
-        self.energy_value = {}
-        self.energy_value['activation'] = list(
-            ene_fxn.getOutput('o0').full().T[0])
-        self.energy_value['enthalpy'] = list(
-            ene_fxn.getOutput('o1').full().T[0])
+            # Evaluate Reaction Energy
+            ene_fxn = cas.SXFunction('ene_fxn', [x, p],
+                                    [self._reaction_energy_expression['activation'],
+                                    self._reaction_energy_expression['enthalpy']])
+            ene_fxn.setInput(F_sim['xf'], 'i0')
+            ene_fxn.setInput(P_dae, 'i1')
+            ene_fxn.evaluate()
+            self.energy_value = {}
+            self.energy_value['activation'] = list(
+                ene_fxn.getOutput('o0').full().T[0])
+            self.energy_value['enthalpy'] = list(
+                ene_fxn.getOutput('o1').full().T[0])
 
-        # Evaluate Equilibrium Constant and Rate Constant
-        k_fxn = cas.SXFunction('k_fxn', [x, p],
-                               [self._Keq,
-                               self._Qeq,
-                               self._kf,
-                               self._kr])
-        k_fxn.setInput(F_sim['xf'], 'i0')
-        k_fxn.setInput(P_dae, 'i1')
-        k_fxn.evaluate()
-        self.equil_rate_const_value = {}
-        self.equil_rate_const_value['Keq'] = list(
-            k_fxn.getOutput('o0').full().T[0])
-        self.equil_rate_const_value['Qeq'] = list(
-            k_fxn.getOutput('o1').full().T[0])
-        self.equil_rate_const_value['kf'] = list(
-            k_fxn.getOutput('o2').full().T[0])
-        self.equil_rate_const_value['kr'] = list(
-            k_fxn.getOutput('o3').full().T[0])
+            # Evaluate Equilibrium Constant and Rate Constant
+            k_fxn = cas.SXFunction('k_fxn', [x, p],
+                                [self._Keq,
+                                self._Qeq,
+                                self._kf,
+                                self._kr])
+            k_fxn.setInput(F_sim['xf'], 'i0')
+            k_fxn.setInput(P_dae, 'i1')
+            k_fxn.evaluate()
+            self.equil_rate_const_value = {}
+            self.equil_rate_const_value['Keq'] = list(
+                k_fxn.getOutput('o0').full().T[0])
+            self.equil_rate_const_value['Qeq'] = list(
+                k_fxn.getOutput('o1').full().T[0])
+            self.equil_rate_const_value['kf'] = list(
+                k_fxn.getOutput('o2').full().T[0])
+            self.equil_rate_const_value['kr'] = list(
+                k_fxn.getOutput('o3').full().T[0])
+
+
+        elif py == 3:
+            rate_fxn = cas.Function('rate_fxn', [x, p],
+                                    [self._rate,
+                                    self._rfor,
+                                    self._rrev])
+            outs = rate_fxn(F_sim['xf'], P_dae)
+            self.rate_value = {}
+            self.rate_value['rnet'] = outs[0].full().T[0].tolist()
+            self.rate_value['rfor'] = outs[1].full().T[0].tolist()
+            self.rate_value['rrev'] = outs[2].full().T[0].tolist()
+            # Evaluate Reaction Energy
+            ene_fxn = cas.Function('ene_fxn', [x, p],
+                                    [self._reaction_energy_expression['activation'],
+                                    self._reaction_energy_expression['enthalpy']])
+            outs = ene_fxn(F_sim['xf'], P_dae)
+            self.energy_value = {}
+            self.energy_value['activation'] = list(outs[0].full().T[0])
+            self.energy_value['enthalpy'] = list(outs[1].full().T[0])
+            # Evaluate Equilibrium Constant and Rate Constant
+            k_fxn = cas.Function('k_fxn', [x, p],
+                                [self._Keq,
+                                self._Qeq,
+                                self._kf,
+                                self._kr])
+            outs = k_fxn(F_sim['xf'], P_dae)
+            self.equil_rate_const_value = {}
+            self.equil_rate_const_value['Keq'] = list(outs[0].full().T[0])
+            self.equil_rate_const_value['Qeq'] = list(outs[1].full().T[0])
+            self.equil_rate_const_value['kf'] = list(outs[2].full().T[0])
+            self.equil_rate_const_value['kr'] = list(outs[3].full().T[0])
+
 
         xrc, xtrc = [], []
         # TODO: degree of rate control

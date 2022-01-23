@@ -26,7 +26,7 @@ def test_cstr_build():
 
     for condi in conditionlist:
         tor, _ = wgs_cstr.fwd_simulation(E, condi, reltol=1e-12, abstol=1e-14)
-        print tor
+        print(tor)
 
 if __name__ == "__main__":
     test_cstr_build()

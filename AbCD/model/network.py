@@ -8,6 +8,11 @@ from copy import copy
 from AbCD.utils import get_index_species, check_index, find_index
 from AbCD.utils import Constant as _const
 
+if sys.version_info[0] == 2:
+    py = 2
+elif sys.version_info[0] == 3:
+    py = 3
+
 class ReactionNet(object):
     '''
     Basic reaction network class
@@ -182,8 +187,12 @@ class SimpleKinetic(ReactionNet):
             kr[i] = kf[i]/Keq[i]
 
         # Constraint function on parameter
-        self._reaction_energy_expression = \
-            {'enthalpy': cas.vertcat(enthal_react), 'activation': cas.vertcat(Ea_react)}
+        if py == 2:
+            self._reaction_energy_expression = \
+                {'enthalpy': cas.vertcat(enthal_react), 'activation': cas.vertcat(Ea_react)}
+        elif py == 3:
+            self._reaction_energy_expression = \
+                {'enthalpy': cas.vertcat(*enthal_react), 'activation': cas.vertcat(*Ea_react)}
         self._kf = kf
         self._kr = kr
         self._Keq = Keq
@@ -212,8 +221,12 @@ class SimpleKinetic(ReactionNet):
                 Ea_cons.append(Ea + self._Pnlp[ind])
             else:
                 Ea_cons.append(Ea)
-        ineq2 = cas.vertcat(Ea_cons) - cas.vertcat(enthal_react_cons)
-        thermal_consis_ineq = cas.vertcat([cas.vertcat(Ea_cons), ineq2])
+        if py == 2:
+            ineq2 = cas.vertcat(Ea_cons) - cas.vertcat(enthal_react_cons)
+            thermal_consis_ineq = cas.vertcat([cas.vertcat(Ea_cons), ineq2])
+        elif py == 3:
+            ineq2 = cas.vertcat(*Ea_cons) - cas.vertcat(*enthal_react_cons)
+            thermal_consis_ineq = cas.vertcat(*[cas.vertcat(*Ea_cons), ineq2])
         self._thermo_constraint_expression = thermal_consis_ineq
 
     def build_rate(self, scale=1.0, des_scale=1):
@@ -264,10 +277,14 @@ class SimpleKinetic(ReactionNet):
             self.build_thermo_constraint(thermoTem=298.15)
         #print(self._thermo_constraint_expression)
         Pnlp = self._Pnlp
-        thermo_consis_fxn = cas.MXFunction('ThermoConsisFxn', [Pnlp], [self._thermo_constraint_expression])
-        thermo_consis_fxn.setInput(dE_start, 'i0')
-        thermo_consis_fxn.evaluate()
-        viol_ = thermo_consis_fxn.getOutput('o0')
+        if py == 2:
+            thermo_consis_fxn = cas.MXFunction('ThermoConsisFxn', [Pnlp], [self._thermo_constraint_expression])
+            thermo_consis_fxn.setInput(dE_start, 'i0')
+            thermo_consis_fxn.evaluate()
+            viol_ = thermo_consis_fxn.getOutput('o0')
+        elif py == 3:
+            thermo_consis_fxn = cas.Function('ThermoConsisFxn', [Pnlp], [self._thermo_constraint_expression])
+            viol_ = thermo_consis_fxn(dE_start)
         return len(np.argwhere(viol_ < -tol)) == 0
     
     def CorrThermoConsis(self, dE_start, fix_Ea=[], fix_BE=[], print_screen=False):
@@ -276,20 +293,31 @@ class SimpleKinetic(ReactionNet):
         Pnlp = self._Pnlp
         ini_p = np.hstack([dE_start])
         dev = Pnlp - ini_p
-
-        object_fxn = cas.mul(dev.T, dev)
+        if py == 2:
+            object_fxn = cas.mul(dev.T, dev)
+        elif py == 3:
+            object_fxn = cas.dot(dev, dev)
+        
         nlp = dict(f=object_fxn, x=Pnlp, g=self._thermo_constraint_expression)
 
         nlpopts = dict()
-        nlpopts['max_iter'] = 500
-        nlpopts['tol'] = 1e-8
-        nlpopts['acceptable_tol'] = 1e-8
-        nlpopts['jac_d_constant'] = 'yes'
-        nlpopts['expect_infeasible_problem'] = 'yes'
-        nlpopts['hessian_approximation'] = 'exact'
-        # print(nlp)
-        solver = cas.NlpSolver('solver', 'ipopt', nlp, nlpopts)
+        if py == 2:
+            nlpopts['max_iter'] = 500
+            nlpopts['tol'] = 1e-8
+            nlpopts['expect_infeasible_problem'] = 'yes'
+            nlpopts['hessian_approximation'] = 'exact'
+            nlpopts['jac_d_constant'] = 'yes'
+        elif py == 3:
+            nlpopts['ipopt.max_iter'] = 500
+            nlpopts['ipopt.tol'] = 1e-8
+            nlpopts['ipopt.expect_infeasible_problem'] = 'yes'
+            nlpopts['ipopt.hessian_approximation'] = 'exact'
+            nlpopts['ipopt.jac_d_constant'] = 'yes'
 
+        if py == 2:
+            solver = cas.NlpSolver('solver', 'ipopt', nlp, nlpopts)
+        elif py == 3:
+            solver = cas.nlpsol('solver', 'ipopt', nlp, nlpopts)
         # Bounds and initial guess
         lbP = -np.inf * np.ones(self._Np)
         ubP = np.inf * np.ones(self._Np)
